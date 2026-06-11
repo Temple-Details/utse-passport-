@@ -1614,8 +1614,8 @@ function renderStatusTable(filtered){
       <td style="text-align:center;display:${isAdmin?'':'none'}" onclick="event.stopPropagation()">${(()=>{ const u=safeUrl(r.pdfLink); return u ? `<a href="${u}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:99px;background:#fee2e2;color:#b91c1c;font-size:0.75rem;font-weight:600;text-decoration:none;white-space:nowrap">📎 PDF</a>` : '<span style="color:#d1d5db">—</span>'; })()}</td>
       <td style="text-align:center;display:${isAdmin?'':'none'}" onclick="event.stopPropagation()">
         <div style="display:flex;flex-direction:column;gap:4px;margin-top:4px;align-items:center">
-          <button id="tbl-save-${globalIdx}" onclick="tblSave(${globalIdx})" style="display:none;width:72px;padding:4px 0;border-radius:8px;background:#16a34a;color:white;border:none;font-size:0.8rem;font-weight:600;cursor:pointer;font-family:inherit">Save</button>
-          <button id="tbl-cancel-${globalIdx}" onclick="tblCancel(${globalIdx})" style="display:none;width:72px;padding:4px 0;border-radius:8px;background:none;color:#dc2626;border:1.5px solid #fca5a5;font-size:0.8rem;font-weight:600;cursor:pointer;font-family:inherit">Cancel</button>
+          <button id="tbl-save-${globalIdx}" onclick="tblSave(${globalIdx})" style="visibility:hidden;pointer-events:none;width:72px;padding:4px 0;border-radius:8px;background:#16a34a;color:white;border:none;font-size:0.8rem;font-weight:600;cursor:pointer;font-family:inherit">Save</button>
+          <button id="tbl-cancel-${globalIdx}" onclick="tblCancel(${globalIdx})" style="visibility:hidden;pointer-events:none;width:72px;padding:4px 0;border-radius:8px;background:none;color:#dc2626;border:1.5px solid #fca5a5;font-size:0.8rem;font-weight:600;cursor:pointer;font-family:inherit">Cancel</button>
           <div style="position:relative;display:inline-block">
             <button onclick="event.stopPropagation();toggleRowMenu(${globalIdx},this)" style="width:28px;height:28px;border-radius:6px;background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">⋮</button>
             <div id="row-menu-${globalIdx}" style="display:none;position:absolute;right:0;top:32px;background:white;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,0.12);z-index:200;min-width:140px;overflow:hidden">
@@ -1850,8 +1850,8 @@ function tblCancel(i) {
   if (statusEl) { statusEl.value = requests[i].status; colorSelect(statusEl); }
   if (noteEl) noteEl.value = requests[i].note || '';
   if (dateEl) dateEl.value = extractStatusDate(requests[i].statusText) || '';
-  if (saveBtn) saveBtn.style.display = 'none';
-  if (cancelBtn) cancelBtn.style.display = 'none';
+  if (saveBtn) { saveBtn.style.visibility='hidden'; saveBtn.style.pointerEvents='none'; }
+  if (cancelBtn) { cancelBtn.style.visibility='hidden'; cancelBtn.style.pointerEvents='none'; }
   const tblBtn = document.querySelector(`button[onclick="openMotiModal(${i})"]`);
   if (tblBtn) {
     const lnk = requests[i].motiLink;
@@ -1951,9 +1951,9 @@ function postToSheets(i) {
 }
 function tblMarkDirty(i) {
   const btn = document.getElementById('tbl-save-'+i);
-  if (btn) btn.style.display = '';
+  if (btn) { btn.style.visibility='visible'; btn.style.pointerEvents='auto'; }
   const cancel = document.getElementById('tbl-cancel-'+i);
-  if (cancel) cancel.style.display = '';
+  if (cancel) { cancel.style.visibility='visible'; cancel.style.pointerEvents='auto'; }
   const val = document.getElementById('tbl-status-'+i) ? document.getElementById('tbl-status-'+i).value : '';
   const dateInput = document.getElementById('tbl-date-'+i);
   if (dateInput && (val === 'sent' || val === 'sent_stdp')) {
@@ -2002,8 +2002,8 @@ function tblSave(i) {
         sel.value = r.status;
         colorSelect(sel);
       }
-      btn.style.opacity=''; btn.style.transition=''; btn.textContent='Save'; btn.style.background='#16a34a'; btn.style.display='none';
-      if(cancelBtn){ cancelBtn.style.opacity=''; cancelBtn.style.transition=''; cancelBtn.style.display='none'; }
+      btn.style.opacity=''; btn.style.transition=''; btn.textContent='Save'; btn.style.background='#16a34a'; btn.style.visibility='hidden'; btn.style.pointerEvents='none';
+      if(cancelBtn){ cancelBtn.style.opacity=''; cancelBtn.style.transition=''; cancelBtn.style.visibility='hidden'; cancelBtn.style.pointerEvents='none'; }
       const tr = btn?.closest('tr');
       if(tr) tr.classList.remove('row-new');
     }, 1300);
@@ -2042,8 +2042,8 @@ function scSaveRow(i){
       if(noteEl) noteEl.textContent = r.note||'';
       const stepper = card.querySelector('.stepper');
       if(stepper) stepper.outerHTML = buildStepper(r.status);
-      btn.style.opacity=''; btn.style.transition=''; btn.textContent='Save'; btn.style.background='#16a34a'; btn.style.display='none';
-      if(cancelBtn){ cancelBtn.style.opacity=''; cancelBtn.style.transition=''; cancelBtn.style.display='none'; }
+      btn.style.opacity=''; btn.style.transition=''; btn.textContent='Save'; btn.style.background='#16a34a'; btn.style.visibility='hidden'; btn.style.pointerEvents='none';
+      if(cancelBtn){ cancelBtn.style.opacity=''; cancelBtn.style.transition=''; cancelBtn.style.visibility='hidden'; cancelBtn.style.pointerEvents='none'; }
     } else { renderStatusTable(); }
   }, 1300);
 }
