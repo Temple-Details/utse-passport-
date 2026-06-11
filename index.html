@@ -2088,9 +2088,28 @@ function showAdminLogin(){
 function closeAdminLogin(){
   document.getElementById('admin-login-modal').classList.remove('open');
 }
-let _loginFailCount = 0;
-let _loginLockUntil = 0;
+let _loginFailCount = parseInt(sessionStorage.getItem('_lfc')||'0');
+let _loginLockUntil = parseInt(sessionStorage.getItem('_llu')||'0');
 let _loginLockTimer = null;
+// ถ้ายังอยู่ในช่วงล็อก ให้ resume countdown ทันที
+if (Date.now() < _loginLockUntil) {
+  const errEl = document.getElementById('login-error');
+  const btn = document.querySelector('#admin-login-modal .btn-primary');
+  let remaining = Math.ceil((_loginLockUntil - Date.now()) / 1000);
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
+  if (errEl) { errEl.textContent = `พิมพ์ผิดหลายครั้ง กรุณารอ ${remaining} วินาที`; errEl.style.display = 'block'; }
+  _loginLockTimer = setInterval(() => {
+    remaining--;
+    if (remaining <= 0) {
+      clearInterval(_loginLockTimer);
+      sessionStorage.removeItem('_llu'); sessionStorage.removeItem('_lfc');
+      if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+      if (errEl) errEl.style.display = 'none';
+    } else {
+      if (errEl) errEl.textContent = `พิมพ์ผิดหลายครั้ง กรุณารอ ${remaining} วินาที`;
+    }
+  }, 1000);
+}
 function adminLogin(){
   const now = Date.now();
   if (now < _loginLockUntil) return;
@@ -2112,11 +2131,14 @@ function adminLogin(){
       showPage('status', document.querySelector('.nav-btn[onclick*="status"]'));
     } else {
       _loginFailCount++;
+      sessionStorage.setItem('_lfc', _loginFailCount);
       const errEl = document.getElementById('login-error');
       const btn = document.querySelector('#admin-login-modal .btn-primary');
       if (_loginFailCount >= 3) {
         _loginLockUntil = Date.now() + 30000;
         _loginFailCount = 0;
+        sessionStorage.setItem('_llu', _loginLockUntil);
+        sessionStorage.setItem('_lfc', '0');
         let remaining = 30;
         if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
         errEl.textContent = `พิมพ์ผิดหลายครั้ง กรุณารอ ${remaining} วินาที`;
