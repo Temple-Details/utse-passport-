@@ -2084,25 +2084,30 @@ function showAdminLogin(){
   document.getElementById('admin-pass').value='';
   document.getElementById('login-error').style.display='none';
   document.getElementById('admin-login-modal').classList.add('open');
+  _resumeLockCountdown();
 }
 function closeAdminLogin(){
   document.getElementById('admin-login-modal').classList.remove('open');
 }
-let _loginFailCount = parseInt(sessionStorage.getItem('_lfc')||'0');
-let _loginLockUntil = parseInt(sessionStorage.getItem('_llu')||'0');
+let _loginFailCount = parseInt(localStorage.getItem('_lfc')||'0');
+let _loginLockUntil = parseInt(localStorage.getItem('_llu')||'0');
+let _loginLockLevel = parseInt(localStorage.getItem('_lll')||'0'); // 0=30s,1=1m,2=2m,3=5m
+const _lockDurations = [30000, 60000, 120000, 300000];
 let _loginLockTimer = null;
-// ถ้ายังอยู่ในช่วงล็อก ให้ resume countdown ทันที
-if (Date.now() < _loginLockUntil) {
+function _resumeLockCountdown() {
+  if (Date.now() >= _loginLockUntil) return;
   const errEl = document.getElementById('login-error');
   const btn = document.querySelector('#admin-login-modal .btn-primary');
   let remaining = Math.ceil((_loginLockUntil - Date.now()) / 1000);
   if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
   if (errEl) { errEl.textContent = `พิมพ์ผิดหลายครั้ง กรุณารอ ${remaining} วินาที`; errEl.style.display = 'block'; }
+  clearInterval(_loginLockTimer);
   _loginLockTimer = setInterval(() => {
-    remaining--;
+    remaining = Math.ceil((_loginLockUntil - Date.now()) / 1000);
     if (remaining <= 0) {
       clearInterval(_loginLockTimer);
-      sessionStorage.removeItem('_llu'); sessionStorage.removeItem('_lfc');
+      localStorage.removeItem('_llu'); localStorage.removeItem('_lfc'); localStorage.removeItem('_lll');
+      _loginLockLevel = 0;
       if (btn) { btn.disabled = false; btn.style.opacity = ''; }
       if (errEl) errEl.style.display = 'none';
     } else {
@@ -2117,6 +2122,8 @@ function adminLogin(){
   sha256(pass).then(hash => {
     if(hash === ADMIN_HASH){
       _loginFailCount = 0;
+      _loginLockLevel = 0;
+      localStorage.removeItem('_llu'); localStorage.removeItem('_lfc'); localStorage.removeItem('_lll');
       _adminState.set(true);
       document.getElementById('admin-dot').classList.add('live');
       document.getElementById('signout-btn').style.display = '';
@@ -2131,29 +2138,17 @@ function adminLogin(){
       showPage('status', document.querySelector('.nav-btn[onclick*="status"]'));
     } else {
       _loginFailCount++;
-      sessionStorage.setItem('_lfc', _loginFailCount);
+      localStorage.setItem('_lfc', _loginFailCount);
       const errEl = document.getElementById('login-error');
       const btn = document.querySelector('#admin-login-modal .btn-primary');
       if (_loginFailCount >= 3) {
-        _loginLockUntil = Date.now() + 30000;
+        _loginLockUntil = Date.now() + _lockDurations[_loginLockLevel];
+        _loginLockLevel = Math.min(_loginLockLevel + 1, _lockDurations.length - 1);
         _loginFailCount = 0;
-        sessionStorage.setItem('_llu', _loginLockUntil);
-        sessionStorage.setItem('_lfc', '0');
-        let remaining = 30;
-        if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
-        errEl.textContent = `พิมพ์ผิดหลายครั้ง กรุณารอ ${remaining} วินาที`;
-        errEl.style.display = 'block';
-        clearInterval(_loginLockTimer);
-        _loginLockTimer = setInterval(() => {
-          remaining--;
-          if (remaining <= 0) {
-            clearInterval(_loginLockTimer);
-            if (btn) { btn.disabled = false; btn.style.opacity = ''; }
-            errEl.style.display = 'none';
-          } else {
-            errEl.textContent = `พิมพ์ผิดหลายครั้ง กรุณารอ ${remaining} วินาที`;
-          }
-        }, 1000);
+        localStorage.setItem('_llu', _loginLockUntil);
+        localStorage.setItem('_lfc', '0');
+        localStorage.setItem('_lll', _loginLockLevel);
+        _resumeLockCountdown();
       } else {
         errEl.textContent = `รหัสผ่านไม่ถูกต้อง (${_loginFailCount}/3)`;
         errEl.style.display = 'block';
