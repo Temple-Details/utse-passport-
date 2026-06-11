@@ -2106,8 +2106,7 @@ function _resumeLockCountdown() {
     remaining = Math.ceil((_loginLockUntil - Date.now()) / 1000);
     if (remaining <= 0) {
       clearInterval(_loginLockTimer);
-      localStorage.removeItem('_llu'); localStorage.removeItem('_lfc'); localStorage.removeItem('_lll');
-      _loginLockLevel = 0;
+      localStorage.removeItem('_llu'); localStorage.removeItem('_lfc');
       if (btn) { btn.disabled = false; btn.style.opacity = ''; }
       if (errEl) errEl.style.display = 'none';
     } else {
