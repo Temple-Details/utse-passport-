@@ -1,0 +1,2146 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<title>ระบบขออนุมัติหนังสือเดินทาง — ส.ธ.ย. (V2)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #1a3a6b;
+    --primary-light: #2a5298;
+    --accent: #c9a84c;
+    --success: #16a34a;
+    --warning: #d97706;
+    --danger: #dc2626;
+    --info: #2563eb;
+    --bg: #eceef1;
+    --card: #f8f9fa;
+    --text: #0f172a;
+    --text-muted: #64748b;
+    --border: #e2e8f0;
+    --radius: 12px;
+    --shadow: 0 2px 16px rgba(26,58,107,0.10);
+  }
+  body { font-family: 'Prompt','Segoe UI',sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-weight: 400; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+
+  /* NAV */
+  .navbar {
+    background: #172554;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 2px 24px rgba(0,0,0,0.35);
+    position: sticky; top: 0; z-index: 100;
+    height: 72px; display: flex; align-items: center;
+    padding: 0 2rem; gap: 1.5rem;
+  }
+  .navbar-top { display: contents; }
+  .navbar-brand { display: flex; align-items: center; gap: 14px; text-decoration: none; flex: 1; min-width: 0; }
+  .navbar-logo {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: linear-gradient(135deg, #e8b84b, var(--accent) 60%, #b8891a);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; font-weight: 900; color: #172554;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.25), 0 4px 16px rgba(201,168,76,0.3);
+  }
+  .navbar-title { color: #f1f5f9; font-size: 1rem; font-weight: 700; line-height: 1.3; }
+  .navbar-title span { display: block; font-size: 0.73rem; font-weight: 400; color: #64748b; margin-top: 1px; }
+  .nav-tabs {
+    display: flex; gap: 4px;
+    background: rgba(255,255,255,0.07);
+    border-radius: 14px; padding: 5px;
+    flex-shrink: 0;
+  }
+  .nav-btn {
+    background: none; border: none;
+    color: rgba(255,255,255,0.65);
+    padding: 8px 20px; cursor: pointer;
+    font-size: 0.9rem; font-family: inherit; font-weight: 500;
+    border-radius: 10px; transition: all 0.18s;
+    display: flex; align-items: center; gap: 6px;
+    white-space: nowrap;
+  }
+  .nav-btn:hover { color: white; background: rgba(255,255,255,0.1); }
+  .nav-btn.active {
+    background: white; color: #172554;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+
+  /* PAGE */
+  .page { display: none; max-width: 780px; margin: 0 auto; padding: 2rem 1rem; }
+  #page-status { max-width: 100%; padding: 2rem 1.5rem; }
+  .page.active { display: block; }
+
+  /* FORM 2-COL LAYOUT */
+  #page-form { max-width: 1140px; }
+  .form-layout { display: grid; grid-template-columns: 1fr 320px; gap: 1.5rem; align-items: start; }
+  @media(max-width: 900px) { .form-layout { grid-template-columns: 1fr; } }
+
+  /* SIDEBAR */
+  .form-sidebar { position: sticky; top: 88px; }
+  .sidebar-card { background: white; border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+  .sidebar-header { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); color: white; padding: 1rem 1.25rem; font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
+  .sidebar-body { padding: 1.1rem 1.25rem; }
+  .summary-row { display: flex; align-items: flex-start; gap: 10px; padding: 0.55rem 0; border-bottom: 1px solid var(--border); }
+  .summary-row:last-child { border-bottom: none; }
+  .summary-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+  .summary-label { font-size: 0.72rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; line-height: 1; margin-bottom: 3px; }
+  .summary-value { font-size: 0.88rem; font-weight: 500; color: var(--text); line-height: 1.3; }
+  .summary-value.empty { color: #94a3b8; font-weight: 400; }
+  .sidebar-submit { padding: 1rem 1.25rem; border-top: 1px solid var(--border); background: #f8fafc; }
+  .sidebar-zone { margin: 0 1.25rem 0.75rem; background: #eef2ff; border: 1.5px solid #818cf8; border-radius: 8px; padding: 0.6rem 0.85rem; display: none; }
+  .sidebar-zone.show { display: block; }
+  .sidebar-zone-title { font-weight: 700; color: #3730a3; font-size: 0.82rem; }
+  .sidebar-zone-sub { font-size: 0.75rem; color: #6366f1; margin-top: 1px; }
+
+  /* CARD */
+  .card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.75rem; margin-bottom: 1.5rem; }
+  .section-title { font-size: 1rem; font-weight: 700; color: var(--primary); margin-bottom: 1.25rem; padding-bottom: 0.6rem; border-bottom: 2px solid var(--border); display: flex; align-items: center; gap: 8px; }
+
+  /* WAT COMBOBOX */
+  .wat-combo-wrap { position: relative; }
+  .wat-dropdown { display: none; position: absolute; top: calc(100% + 2px); left: 0; right: 0; background: white; border: 1.5px solid var(--primary-light); border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 100; max-height: 220px; overflow-y: auto; }
+  .wat-dropdown.show { display: block; }
+  .wat-opt { padding: 0.55rem 0.85rem; font-size: 0.9rem; cursor: pointer; color: var(--text); }
+  .wat-opt:hover, .wat-opt.active { background: var(--primary); color: white; }
+  .wat-opt.no-result { color: var(--text-muted); cursor: default; font-style: italic; }
+  .wat-opt.no-result:hover { background: none; color: var(--text-muted); }
+
+  /* FORM */
+  .form-group { margin-bottom: 1.1rem; }
+  .form-label { display: block; font-weight: 600; color: var(--text); margin-bottom: 0.35rem; font-size: 0.88rem; }
+  .form-label .req { color: var(--danger); margin-left: 2px; }
+  .form-control { width: 100%; padding: 0.6rem 0.85rem; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.92rem; font-family: inherit; color: var(--text); transition: border-color 0.2s, box-shadow 0.2s; background: white; }
+  .form-control:focus { outline: none; border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(42,82,152,0.12); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+  @media(max-width:600px){ .form-row,.form-row-3 { grid-template-columns: 1fr; } }
+
+  /* ZONE BANNER */
+  .zone-banner { display: none; background: #eef2ff; border: 2px solid #818cf8; border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 1rem; align-items: center; gap: 10px; }
+  .zone-banner.show { display: flex; }
+  .zone-banner-text { font-weight: 700; color: #3730a3; font-size: 0.92rem; }
+  .zone-banner-sub { font-size: 0.8rem; color: #6366f1; }
+
+  /* TYPE CARDS */
+  .type-cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 0.75rem; }
+  @media(max-width:550px){ .type-cards { grid-template-columns: 1fr; } }
+  .type-card { border: 2px solid var(--border); border-radius: 10px; padding: 0.9rem 0.75rem; cursor: pointer; transition: all 0.2s; text-align: center; background: white; }
+  .type-card { position: relative; transition: all 0.2s; }
+  .type-card:hover { border-color: #93c5fd; background: #f8faff; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(42,82,152,0.08); }
+  .type-card.selected { border-color: var(--primary); background: linear-gradient(160deg,#eef2ff 0%,#f8faff 100%); box-shadow: 0 0 0 3px rgba(42,82,152,0.12), 0 4px 16px rgba(42,82,152,0.1); transform: translateY(-1px); }
+  .type-card.type-brown:hover { border-color: #c8956c; background: #fdf6f0; }
+  .type-card.type-brown.selected { border-color: #7c4a1e; background: linear-gradient(160deg,#fdf0e4 0%,#fff8f2 100%); box-shadow: 0 0 0 3px rgba(124,74,30,0.12), 0 4px 16px rgba(124,74,30,0.1); }
+  .type-card.type-brown .type-card-title { color: #7c4a1e; }
+  .type-card.type-brown .type-card-check { background: #7c4a1e; }
+  .type-card.type-brown .type-card-link:hover { color: #7c4a1e; }
+  .type-card-check { display: none; position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; border-radius: 50%; background: var(--primary); color: white; font-size: 0.7rem; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(26,58,107,0.35); }
+  .type-card.selected .type-card-check { display: flex; }
+  .type-card-icon { font-size: 1.8rem; margin-bottom: 0.4rem; }
+  .type-card-title { font-weight: 700; font-size: 0.85rem; color: var(--primary); margin-bottom: 0.2rem; }
+  .type-card-desc { font-size: 0.75rem; color: var(--text-muted); }
+  .type-card-link { display: inline-block; margin-top: 0.55rem; font-size: 0.75rem; color: var(--info); text-decoration: none; font-weight: 500; border-top: 1px solid var(--border); padding-top: 0.45rem; width: 100%; }
+  .type-card-link:hover { text-decoration: underline; color: var(--primary); }
+
+  /* FILE UPLOAD */
+  .file-upload-area { border: 2px dashed var(--border); border-radius: 10px; padding: 1.25rem; text-align: center; cursor: pointer; transition: all 0.2s; background: #fafbfc; }
+  .file-upload-area:hover { border-color: var(--primary-light); background: #eef2ff; }
+  .file-upload-area input[type=file] { display: none; }
+
+  /* BUTTONS */
+  .btn { padding: 0.65rem 1.4rem; border-radius: 8px; border: none; font-size: 0.95rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: var(--primary-light); }
+  .btn-primary:disabled { background: #94a3b8; cursor: not-allowed; }
+  .btn-outline { background: white; color: var(--primary); border: 2px solid var(--primary); }
+  .btn-success { background: var(--success); color: white; }
+  .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.82rem; }
+  .btn-full { width: 100%; justify-content: center; }
+
+  /* BADGES */
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 99px; font-size: 0.78rem; font-weight: 600; white-space: nowrap; }
+  .badge-waiting { background: #fef9c3; color: #92400e; }
+  .badge-sent { background: #dbeafe; color: #1e40af; }
+  .badge-approved { background: #dcfce7; color: #15803d; }
+  .badge-incomplete { background: #fee2e2; color: #991b1b; }
+  .badge-cancelled { background: #e5e7eb; color: #374151; }
+
+  /* SUBMIT AREA */
+  .submit-area { background: #f8fafc; border: 1.5px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-top: 0.5rem; }
+  .submit-summary { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.8; }
+  .submit-summary strong { color: var(--text); }
+
+  /* STATUS */
+  .search-bar { display: flex; gap: 0.75rem; margin-bottom: 0.5rem; flex-wrap: wrap; align-items: flex-end; }
+  .search-input { flex: 1; min-width: 200px; }
+  .filter-group { display: flex; flex-direction: column; gap: 3px; }
+  .filter-label { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); }
+  .filter-select { padding: 0.6rem 0.85rem; border: 1.5px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.88rem; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  th { background: var(--primary); color: white; padding: 10px 12px; text-align: left; font-weight: 600; }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:hover td { background: #f8fafc; }
+
+  /* MOBILE CARD LIST */
+  .card-list { display: none; }
+  .status-card {
+    background: white; border-radius: 12px; box-shadow: var(--shadow);
+    padding: 1rem 1.1rem; margin-bottom: 0.85rem; border-left: 4px solid var(--border);
+  }
+  .status-card.waiting  { border-left-color: #f59e0b; }
+  .status-card.sent     { border-left-color: #3b82f6; }
+  .status-card.approved { border-left-color: #16a34a; }
+  .status-card.incomplete { border-left-color: #dc2626; }
+  .sc-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; }
+  .sc-ref { font-family: monospace; font-weight: 700; color: var(--primary); font-size: 0.88rem; }
+  .sc-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.2rem; }
+  .sc-sub { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+  .sc-type { font-size: 0.82rem; color: var(--text); margin-bottom: 0.6rem; }
+  .sc-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
+  .sc-note { font-size: 0.8rem; color: var(--text-muted); }
+  .sc-admin-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border); }
+  .sc-admin-actions select { flex: 1; padding: 5px 8px; border: 1.5px solid var(--border); border-radius: 7px; font-family: inherit; font-size: 0.82rem; }
+  .sc-admin-actions input { flex: 1.2; padding: 5px 8px; border: 1.5px solid var(--border); border-radius: 7px; font-family: inherit; font-size: 0.82rem; }
+
+  @media (max-width: 640px) {
+    .table-wrap { display: none; }
+    .card-list  { display: block; }
+    .sc-admin-actions { flex-direction: column; gap: 0.4rem; }
+    .sc-admin-actions select,
+    .sc-admin-actions input { width: 100%; min-width: unset; }
+    .sc-admin-actions button { width: 100%; }
+  }
+  .ref-code { font-family: monospace; font-size: 0.85rem; color: var(--primary); font-weight: 700; }
+  .zone-badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 500; background: #e0e7ff; color: #3730a3; white-space: nowrap; }
+
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center; padding: 1rem; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: white; border-radius: var(--radius); padding: 2rem; max-width: 480px; width: 100%; box-shadow: 0 8px 40px rgba(0,0,0,0.2); animation: slideUp 0.25s ease; text-align: center; }
+  .modal-detail { text-align: left; max-width: 520px; padding: 1.5rem; max-height: 90vh; overflow-y: auto; }
+  .modal-detail .md-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.1rem; }
+  .modal-detail .md-name { font-size: 1.1rem; font-weight: 700; color: var(--primary); }
+  .modal-detail .md-sub { font-size: 0.83rem; color: var(--text-muted); margin-top: 2px; }
+  .modal-detail .md-close { background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--text-muted); line-height: 1; padding: 0; }
+  .modal-detail .md-section { margin-bottom: 1rem; }
+  .modal-detail .md-label { font-size: 0.72rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.3rem; }
+  .modal-detail .md-value { font-size: 0.9rem; color: var(--text); }
+  .modal-detail .md-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem 1rem; margin-bottom: 1rem; }
+  .modal-detail .md-divider { height: 1px; background: var(--border); margin: 1rem 0; }
+  .modal-detail .md-timeline { display: flex; align-items: center; gap: 0; margin: 0.5rem 0; }
+  .modal-detail .md-step { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 1; }
+  .modal-detail .md-step-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; background: #e5e7eb; color: #9ca3af; }
+  .modal-detail .md-step-dot.done { background: #dcfce7; color: #15803d; }
+  .modal-detail .md-step-dot.active { background: #dbeafe; color: #1d4ed8; box-shadow: 0 0 0 3px #bfdbfe; }
+  .modal-detail .md-step-label { font-size: 0.7rem; color: #9ca3af; text-align: center; }
+  .modal-detail .md-step-label.done { color: #15803d; font-weight: 600; }
+  .modal-detail .md-step-label.active { color: #1d4ed8; font-weight: 600; }
+  .modal-detail .md-step-line { flex: 1; height: 2px; background: #e5e7eb; margin-bottom: 18px; }
+  .modal-detail .md-step-line.done { background: #22c55e; }
+  #page-status tr.clickable { cursor: pointer; }
+  #page-status tr.clickable:hover td { background: #eff6ff; }
+  @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: none; opacity: 1; } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes pulse-dot { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.45; transform:scale(0.75); } }
+  .admin-dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:#6b7280; margin-right:6px; vertical-align:middle; }
+  .admin-dot.live { background:#22c55e; animation:pulse-dot 2.4s ease-in-out infinite; }
+  .admin-new-badge { display:inline-flex; align-items:center; justify-content:center; background:#ef4444; color:white; border-radius:99px; font-size:0.7rem; font-weight:700; min-width:18px; height:18px; padding:0 5px; margin-left:6px; line-height:1; }
+  tr.row-new td { background:#fefce8 !important; }
+  .new-tag { display:inline-block; background:#fef08a; color:#92400e; border-radius:4px; font-size:0.68rem; font-weight:700; padding:1px 6px; margin-left:4px; border:1px solid #fde047; }
+  .ref-big { font-size: 1.8rem; font-family: monospace; font-weight: 900; color: var(--primary); letter-spacing: 2px; margin: 0.5rem 0; }
+
+  /* ADMIN */
+  .login-box { max-width: 380px; margin: 3rem auto; }
+  .edit-select { padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.82rem; font-family: inherit; }
+  .note-input { padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.82rem; font-family: inherit; width: 130px; }
+
+  /* HERO */
+  .hero { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); color: white; border-radius: var(--radius); padding: 1.75rem; margin-bottom: 1.5rem; }
+  .hero h2 { font-size: 1.25rem; margin-bottom: 0.4rem; }
+  .hero p { opacity: 0.85; font-size: 0.9rem; line-height: 1.6; }
+
+  /* STATUS PAGE — Apple B2 */
+  #page-status { background: #f2f3f5; }
+  #page-status .hero {
+    background: linear-gradient(135deg, #172554 0%, #1e3a8a 60%, #1e40af 100%);
+    border-radius: 20px; padding: 2rem 2rem 1.75rem;
+    box-shadow: 0 4px 24px rgba(30,64,175,0.18);
+  }
+  #page-status .hero h2 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; color: #f1f5f9; }
+  #page-status .hero p { font-size: 0.88rem; color: #cbd5e1; }
+  #page-status .card {
+    border-radius: 20px;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.07);
+    border: 1px solid rgba(0,0,0,0.06);
+    padding: 1.5rem;
+  }
+  #page-status .search-input {
+    border-radius: 12px; border: 1.5px solid #e5e7eb;
+    background: #fafafa; font-size: 0.9rem; padding: 0.65rem 1rem;
+  }
+  #page-status .search-input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+  #page-status .filter-select {
+    border-radius: 12px; border: 1.5px solid #e5e7eb;
+    background: #fafafa; font-size: 0.88rem;
+  }
+  #page-status .filter-label { color: #6b7280; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+  #page-status #result-count { color: #6b7280; font-size: 0.8rem; font-weight: 500; }
+  #page-status th { background: #1e3a8a; color: #e2e8f0; font-size: 0.82rem; letter-spacing: 0.03em; text-align: center; }
+  #page-status td { font-size: 0.85rem; }
+  #page-status tr:hover td { background: #eff6ff; }
+
+  /* Apple-style badges */
+  #page-status .badge { position: relative; border-radius: 99px; font-size: 0.76rem; font-weight: 600; padding: 4px 16px 4px 30px; width: 230px; display: block; text-align: center; max-width: 100%; }
+  #page-status .badge::before { content: ''; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 8px; height: 8px; border-radius: 50%; }
+  #page-status .badge-waiting::before  { background: #f59e0b; }
+  #page-status .badge-sent::before     { background: #2563eb; }
+  #page-status .badge-sent-stdp::before{ background: #7c3aed; }
+  #page-status .badge-approved::before { background: #16a34a; }
+  #page-status .badge-incomplete::before{ background: #dc2626; }
+  #page-status .badge-cancelled::before{ background: #9ca3af; }
+  #page-status .badge-waiting  { background: #fef3c7; color: #92400e; }
+  #page-status .badge-sent     { background: #dbeafe; color: #1d4ed8; }
+  #page-status .badge-approved { background: #dcfce7; color: #15803d; }
+  #page-status .badge-incomplete { background: #fee2e2; color: #b91c1c; }
+  #page-status .badge-sent-stdp { background: #ede9fe; color: #6d28d9; }
+  #page-status .badge-cancelled { background: #f3f4f6; color: #4b5563; }
+
+  /* Mobile cards Apple style */
+  #page-status .status-card {
+    border-radius: 16px; border-left: none;
+    border: 1px solid rgba(0,0,0,0.07);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    padding: 1.1rem 1.25rem;
+  }
+  #page-status .status-card.waiting  { border-top: 3px solid #f59e0b; }
+  #page-status .status-card.sent     { border-top: 3px solid #2563eb; }
+  #page-status .status-card.approved { border-top: 3px solid #16a34a; }
+  #page-status .status-card.incomplete { border-top: 3px solid #dc2626; }
+  #page-status .status-card.cancelled { border-top: 3px solid #9ca3af; }
+  #page-status .zone-badge { background: #eff6ff; color: #1d4ed8; border-radius: 8px; font-size: 0.75rem; }
+
+  /* Stats bar */
+  .stats-bar { display: flex; gap: 0.4rem; flex-wrap: wrap; margin: 0.6rem 0 0.75rem; }
+  .stat-chip {
+    display: flex; align-items: center; gap: 0.3rem;
+    padding: 0.25rem 0.65rem; border-radius: 99px;
+    font-size: 0.75rem; font-weight: 500; cursor: pointer; font-family: inherit;
+    border: 1.5px solid transparent; transition: all 0.15s;
+    background: #f1f5f9; color: #6b7280;
+  }
+  .stat-chip:hover { background: #e5e7eb; color: #374151; }
+  .stat-chip.active { border-color: currentColor; background: #fff; font-weight: 600; }
+  .stat-chip.chip-all   { color: #6b7280; }
+  .stat-chip.chip-new   { color: #fff; background: #16a34a; border-color: #16a34a; font-weight: 600; }
+  .stat-chip.chip-new.active { background: #fff; color: #16a34a; border-color: #16a34a; border-width: 2px; }
+  .new-badge { display:inline-block; padding:1px 7px; border-radius:99px; background:#16a34a; color:#fff; font-size:0.7rem; font-weight:700; margin-left:6px; vertical-align:middle; }
+  .stat-chip.chip-waiting   { color: #92400e; background: #fef9ec; }
+  .stat-chip.chip-sent      { color: #1d4ed8; background: #eff6ff; }
+  .stat-chip.chip-approved  { color: #15803d; background: #f0fdf4; }
+  .stat-chip.chip-sent-stdp { color: #6d28d9; background: #f5f3ff; }
+  .stat-chip.chip-incomplete{ color: #b91c1c; background: #fff5f5; }
+  .stat-chip.chip-cancelled { color: #6b7280; background: #f9fafb; }
+  .stat-chip .chip-count { font-size: 0.78rem; font-weight: 700; }
+
+  /* Zone tabs */
+  .zone-tabs { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+  .zone-tab {
+    padding: 0.3rem 0.85rem; border-radius: 99px; border: 1.5px solid #e5e7eb;
+    font-size: 0.8rem; font-weight: 500; font-family: inherit;
+    background: #f9fafb; color: #6b7280; cursor: pointer; transition: all 0.15s;
+  }
+  .zone-tab:hover { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+  .zone-tab.active { background: #1e3a8a; color: #fff; border-color: #1e3a8a; font-weight: 600; }
+
+  /* Progress stepper */
+  .stepper { display: flex; align-items: center; gap: 0; margin-top: 0.55rem; }
+  .step {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 0.68rem; font-weight: 500; color: #9ca3af;
+    padding: 3px 8px; border-radius: 4px;
+  }
+  .step .dot { width: 7px; height: 7px; border-radius: 50%; background: #d1d5db; flex-shrink: 0; }
+  .step.done { color: #374151; }
+  .step.done .dot { background: #22c55e; }
+  .step.active { color: #1d4ed8; font-weight: 600; }
+  .step.active .dot { background: #3b82f6; box-shadow: 0 0 0 2px #bfdbfe; }
+  .step-line { flex: 1; height: 1.5px; background: #e5e7eb; min-width: 12px; max-width: 28px; }
+  .step-line.done { background: #22c55e; }
+
+  /* Skeleton loading */
+  .skeleton-wrap { padding: 0.5rem 0; }
+  .skeleton-row { display: flex; gap: 0.75rem; margin-bottom: 0.75rem; align-items: center; }
+  .skeleton-box {
+    border-radius: 6px; background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+    background-size: 200% 100%; animation: shimmer 1.4s infinite; height: 14px;
+  }
+  @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+  .contact-tip-wrap .contact-tip { display:none; position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%); background:#1e293b; color:#fff; font-size:0.75rem; padding:5px 10px; border-radius:7px; white-space:nowrap; z-index:999; pointer-events:none; }
+  .contact-tip-wrap:hover .contact-tip { display:block; }
+  .skeleton-card { border-radius: 14px; background: #fff; border: 1px solid #e5e7eb; padding: 1rem 1.1rem; margin-bottom: 0.65rem; }
+
+  /* Sort icon on th */
+  #page-status th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+  #page-status th.sortable:hover { background: #1e40af; }
+  #page-status th.sortable .sort-icon { opacity: 0.45; margin-left: 4px; font-size: 0.75rem; }
+  #page-status th.sortable.asc .sort-icon,
+  #page-status th.sortable.desc .sort-icon { opacity: 1; }
+
+  /* Highlight mark */
+  mark.hl { background: #fef08a; border-radius: 2px; padding: 0 1px; color: inherit; }
+
+  /* FORM STEP INDICATOR */
+  .form-steps { display: flex; align-items: center; margin-bottom: 1.5rem; }
+  .form-step { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 500; color: #9ca3af; }
+  .form-step .fs-dot { width: 24px; height: 24px; border-radius: 50%; background: #e5e7eb; color: #9ca3af; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 700; flex-shrink: 0; }
+  .form-step.done { color: #16a34a; }
+  .form-step.done .fs-dot { background: #dcfce7; color: #16a34a; }
+  .form-step.active { color: var(--primary); font-weight: 600; }
+  .form-step.active .fs-dot { background: var(--primary); color: white; box-shadow: 0 0 0 3px rgba(26,58,107,0.15); }
+  .form-step-line { flex: 1; height: 2px; background: #e5e7eb; margin: 0 6px; min-width: 20px; }
+  .form-step-line.done { background: #22c55e; }
+  @media(max-width:500px){ .form-step span { display: none; } .form-step-line { min-width: 12px; } }
+
+  /* DIVIDER */
+  .divider { height: 1px; background: var(--border); margin: 1.5rem 0; }
+
+  /* ERROR MSG */
+  .field-error { color: var(--danger); font-size: 0.8rem; margin-top: 4px; display: none; }
+  .form-control.error { border-color: var(--danger); }
+
+  @media(max-width:640px){
+    .navbar-title { display: none; }
+    .navbar-logo { width: 36px; height: 36px; font-size: 0.7rem; flex-shrink: 0; }
+    .navbar-brand { flex: 0 0 auto; }
+    .nav-tabs { flex: 1; justify-content: flex-end; gap: 2px; flex-wrap: nowrap; }
+    .nav-btn { padding: 6px 8px; font-size: 0.78rem; white-space: nowrap; }
+    #signout-btn { padding: 6px 8px; }
+    .zone-tab { padding: 0.2rem 0.4rem; font-size: 0.75rem; }
+    .zone-tabs { gap: 0.25rem; }
+    /* เพิ่ม padding ล่างหน้า form เล็กน้อย */
+    #page-form { padding-bottom: 1.5rem; }
+    /* zone tabs เลื่อนแนวนอนแทน wrap */
+    .zone-tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .zone-tabs::-webkit-scrollbar { display: none; }
+    .zone-tab { flex-shrink: 0; }
+    /* search bar stack แนวตั้ง */
+    .search-bar { flex-direction: column; align-items: stretch; }
+    .search-bar .filter-group { width: 100%; }
+    .search-bar .filter-select { width: 100%; }
+  }
+
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="navbar-top">
+    <a class="navbar-brand" href="#">
+      <div class="navbar-logo">ส.ธ.</div>
+      <div class="navbar-title">
+        ส.ธ.ย. — หนังสือเดินทาง
+        <span>สหภาพพระธรรมทูตไทยในทวีปยุโรป</span>
+      </div>
+    </a>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-btn active" onclick="showPage('form',this)">📝 ยื่นคำขอ</button>
+    <button class="nav-btn" onclick="showPage('status',this)">🔍 ตรวจสถานะ</button>
+    <button class="nav-btn" id="admin-nav-btn" onclick="showAdminLogin()"><span class="admin-dot" id="admin-dot"></span>Admin</button>
+    <button class="nav-btn" id="signout-btn" onclick="adminLogout()" style="display:none;color:rgba(255,255,255,0.6);font-size:0.82rem">Sign out</button>
+  </div>
+</nav>
+
+<!-- ===== PAGE: FORM (ONE PAGE) ===== -->
+<div id="page-form" class="page active">
+
+  <div class="hero">
+    <h2>ยื่นคำขออนุมัติหนังสือเดินทาง</h2>
+    <p>กรอกข้อมูลให้ครบถ้วนแล้วกดส่งได้เลย — ระบบจัดเขตให้อัตโนมัติตามประเทศที่เลือก</p>
+  </div>
+
+  <div class="form-layout">
+  <div class="card" style="margin-bottom:0">
+
+    <!-- STEP INDICATOR -->
+    <div class="form-steps" id="form-steps">
+      <div class="form-step active" id="fs-1"><div class="fs-dot">1</div><span>ข้อมูลพระ</span></div>
+      <div class="form-step-line" id="fs-line-1"></div>
+      <div class="form-step" id="fs-2"><div class="fs-dot">2</div><span>ประเภทคำขอ</span></div>
+      <div class="form-step-line" id="fs-line-2"></div>
+      <div class="form-step" id="fs-3"><div class="fs-dot">3</div><span>เอกสาร</span></div>
+    </div>
+
+    <!-- SECTION 1: ข้อมูลพระ -->
+    <div class="section-title">👤 ข้อมูลพระภิกษุ</div>
+
+    <div class="zone-banner" id="zone-banner">
+      <span style="font-size:1.3rem">📍</span>
+      <div>
+        <div class="zone-banner-text">คำขอนี้จะถูกส่งไปที่ <span id="zone-name"></span></div>
+        <div class="zone-banner-sub" id="zone-countries"></div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">ประเทศที่สังกัด <span class="req">*</span></label>
+        <select class="form-control" id="country-select" onchange="updateWats()">
+          <option value="">— เลือกประเทศ —</option>
+          <optgroup label="เขต 1 — ยุโรปตะวันตก">
+            <option value="france">ฝรั่งเศส</option>
+            <option value="netherlands">เนเธอร์แลนด์</option>
+            <option value="belgium">เบลเยียม</option>
+            <option value="luxembourg">ลักแซมบวร์ก</option>
+          </optgroup>
+          <optgroup label="เขต 2 — ยุโรปกลาง">
+            <option value="germany">เยอรมนี</option>
+            <option value="estonia">เอสโตเนีย</option>
+          </optgroup>
+          <optgroup label="เขต 3 — สแกนดิเนเวีย">
+            <option value="sweden">สวีเดน</option>
+            <option value="norway">นอร์เวย์</option>
+            <option value="denmark">เดนมาร์ก</option>
+            <option value="finland">ฟินแลนด์</option>
+            <option value="iceland">ไอซ์แลนด์</option>
+          </optgroup>
+          <optgroup label="เขต 4 — ยุโรปใต้และตะวันออก">
+            <option value="switzerland">สวิตเซอร์แลนด์</option>
+            <option value="austria">ออสเตรีย</option>
+            <option value="italy">อิตาลี</option>
+            <option value="greece">กรีซ</option>
+            <option value="czech">เช็ก</option>
+            <option value="hungary">ฮังการี</option>
+            <option value="malta">มอลต้า</option>
+          </optgroup>
+        </select>
+        <div class="field-error" id="err-country">กรุณาเลือกประเทศ</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">วัดสมาชิก ส.ธ.ย. <span class="req">*</span></label>
+        <div class="wat-combo-wrap" id="wat-combo-wrap">
+          <input type="text" class="form-control" id="wat-input" placeholder="— เลือกประเทศก่อน —" autocomplete="off" disabled>
+          <input type="hidden" id="wat-select">
+          <div class="wat-dropdown" id="wat-dropdown"></div>
+        </div>
+        <div class="field-error" id="err-wat">กรุณาเลือกวัด</div>
+      </div>
+    </div>
+
+    <div class="form-row-3">
+      <div class="form-group">
+        <label class="form-label">ชื่อ <span class="req">*</span></label>
+        <input type="text" class="form-control" id="fname" placeholder="เช่น สมชาย">
+        <div class="field-error" id="err-fname">กรุณากรอกชื่อ</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">ฉายา</label>
+        <input type="text" class="form-control" id="ftitle" placeholder="เช่น ปัญญาวโร">
+      </div>
+      <div class="form-group">
+        <label class="form-label">นามสกุล <span class="req">*</span></label>
+        <input type="text" class="form-control" id="lname" placeholder="นามสกุล">
+        <div class="field-error" id="err-lname">กรุณากรอกนามสกุล</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- SECTION 2: ประเภทคำขอ -->
+    <div class="section-title">📋 ประเภทคำขอ <span class="req" style="font-size:0.85rem">*</span></div>
+    <div class="type-cards" style="margin-bottom:0.5rem">
+      <div class="type-card" id="type-1" onclick="selectType(1)">
+        <div class="type-card-check">✓</div>
+        <div class="type-card-icon"><svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="6" y="3" width="22" height="30" rx="2" fill="#1d4ed8"/><rect x="6" y="3" width="4" height="30" rx="1" fill="#1e3a8a"/><rect x="10" y="8" width="14" height="2" rx="1" fill="rgba(255,255,255,0.4)"/><rect x="10" y="12" width="10" height="2" rx="1" fill="rgba(255,255,255,0.3)"/></svg></div>
+        <div class="type-card-title">ขออนุมัติทำเล่มใหม่</div>
+        <div class="type-card-desc">หนังสือเดินทางพระธรรมทูต (เล่มใหม่)</div>
+        <a href="#" class="type-card-link" onclick="event.stopPropagation();openDocGuide('https://drive.google.com/file/d/183hQfwMcCfZKYKEtFIeGZo_flHq8eJks/view')">📎 ดูตัวอย่างเอกสาร</a>
+      </div>
+      <div class="type-card" id="type-2" onclick="selectType(2)">
+        <div class="type-card-check">✓</div>
+        <div class="type-card-icon"><svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="6" y="3" width="22" height="30" rx="2" fill="#1d4ed8"/><rect x="6" y="3" width="4" height="30" rx="1" fill="#1e3a8a"/><rect x="10" y="8" width="14" height="2" rx="1" fill="rgba(255,255,255,0.4)"/><rect x="10" y="12" width="10" height="2" rx="1" fill="rgba(255,255,255,0.3)"/></svg></div>
+        <div class="type-card-title">ขอต่ออายุ</div>
+        <div class="type-card-desc">หนังสือเดินทางพระธรรมทูต</div>
+        <a href="#" class="type-card-link" onclick="event.stopPropagation();openDocGuide('https://drive.google.com/file/d/13mXMxstUAQrc9JzYhs59jiefn5PqFVtT/view')">📎 ดูตัวอย่างเอกสาร</a>
+      </div>
+      <div class="type-card type-brown" id="type-3" onclick="selectType(3)">
+        <div class="type-card-check">✓</div>
+        <div class="type-card-icon"><svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="6" y="3" width="22" height="30" rx="2" fill="#7c4a1e"/><rect x="6" y="3" width="4" height="30" rx="1" fill="#5a3310"/><rect x="10" y="8" width="14" height="2" rx="1" fill="rgba(255,255,255,0.4)"/><rect x="10" y="12" width="10" height="2" rx="1" fill="rgba(255,255,255,0.3)"/></svg></div>
+        <div class="type-card-title">ขอต่ออายุ ศตภ.</div>
+        <div class="type-card-desc">หนังสือเดินทาง ศตภ. (เล่มน้ำตาล)</div>
+        <a href="#" class="type-card-link" onclick="event.stopPropagation();openDocGuide('https://drive.google.com/file/d/1AYoLQPXGRwrS_XFL2UoC2PzA6mwLpYf0/view')">📎 ดูตัวอย่างเอกสาร</a>
+      </div>
+    </div>
+    <div class="field-error" id="err-type" style="margin-bottom:0.5rem">กรุณาเลือกประเภทคำขอ</div>
+
+    <div class="divider"></div>
+
+    <!-- SECTION 3: เอกสาร + ติดต่อ -->
+    <div class="section-title">📎 เอกสารและข้อมูลติดต่อ</div>
+
+    <div class="form-group">
+      <label class="form-label">แนบไฟล์เอกสาร PDF <span class="req">*</span></label>
+      <div class="file-upload-area" onclick="document.getElementById('pdf-input').click()" id="file-area">
+        <input type="file" id="pdf-input" accept=".pdf" onchange="fileSelected(this)">
+        <div style="font-size:1.8rem;margin-bottom:0.4rem">📄</div>
+        <div style="font-weight:600;color:var(--primary);font-size:0.9rem" id="file-upload-label">คลิกเพื่อเลือกไฟล์ PDF</div>
+        <div style="font-size:0.8rem;color:var(--text-muted);margin-top:4px" id="file-label">รองรับ PDF ขนาดไม่เกิน 10MB</div>
+      </div>
+      <div class="field-error" id="err-file">กรุณาแนบไฟล์ PDF</div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">ช่องทางติดต่อ <span class="req">*</span></label>
+      <input type="text" class="form-control" id="contact" placeholder="Email / Line ID / เบอร์โทร">
+      <div class="field-error" id="err-contact">กรุณากรอกข้อมูลติดต่อ</div>
+    </div>
+
+    <div class="divider"></div>
+
+  </div><!-- /card -->
+
+  <!-- SIDEBAR -->
+  <div class="form-sidebar">
+    <div class="sidebar-card">
+      <div class="sidebar-header">📋 สรุปคำขอ</div>
+      <div class="sidebar-zone" id="sb-zone">
+        <div class="sidebar-zone-title" id="sb-zone-name"></div>
+        <div class="sidebar-zone-sub" id="sb-zone-countries"></div>
+      </div>
+      <div class="sidebar-body">
+        <div class="summary-row">
+          <span class="summary-icon" id="sb-icon-country">⬜</span>
+          <div>
+            <div class="summary-label">ประเทศที่สังกัด</div>
+            <div class="summary-value empty" id="sb-country">— ยังไม่ได้เลือก —</div>
+          </div>
+        </div>
+        <div class="summary-row">
+          <span class="summary-icon" id="sb-icon-wat">⬜</span>
+          <div>
+            <div class="summary-label">วัด</div>
+            <div class="summary-value empty" id="sb-wat">— ยังไม่ได้เลือก —</div>
+          </div>
+        </div>
+        <div class="summary-row">
+          <span class="summary-icon" id="sb-icon-name">⬜</span>
+          <div>
+            <div class="summary-label">ชื่อ ฉายา นามสกุล</div>
+            <div class="summary-value empty" id="sb-name">— ยังไม่ได้กรอก —</div>
+          </div>
+        </div>
+        <div class="summary-row">
+          <span class="summary-icon" id="sb-icon-type">⬜</span>
+          <div>
+            <div class="summary-label">ประเภทคำขอ</div>
+            <div class="summary-value empty" id="sb-type">— ยังไม่ได้เลือก —</div>
+          </div>
+        </div>
+        <div class="summary-row">
+          <span class="summary-icon" id="sb-icon-file">⬜</span>
+          <div>
+            <div class="summary-label">ไฟล์เอกสาร PDF</div>
+            <div class="summary-value empty" id="sb-file">— ยังไม่ได้แนบ —</div>
+          </div>
+        </div>
+        <div class="summary-row">
+          <span class="summary-icon" id="sb-icon-contact">⬜</span>
+          <div>
+            <div class="summary-label">ช่องทางติดต่อ</div>
+            <div class="summary-value empty" id="sb-contact">— ยังไม่ได้กรอก —</div>
+          </div>
+        </div>
+      </div>
+      <div class="sidebar-submit">
+        <button class="btn btn-success btn-full" id="submit-btn" onclick="submitForm()">
+          ✅ ส่งคำขอ
+        </button>
+        <button class="btn btn-outline btn-full" style="margin-top:0.5rem;justify-content:center" onclick="goCheckStatus()">
+          🔍 ตรวจสอบสถานะคำขอ
+        </button>
+      </div>
+    </div>
+  </div><!-- /sidebar -->
+
+  </div><!-- /form-layout -->
+</div>
+
+<!-- ===== PAGE: STATUS ===== -->
+<div id="page-status" class="page">
+  <div class="hero">
+    <h2>ตรวจสอบสถานะคำขอ</h2>
+    <p>ค้นหาด้วยชื่อ ฉายา หรือชื่อวัด — ข้อมูลทุกเขตอยู่ในหน้าเดียว</p>
+  </div>
+  <div class="card">
+    <div class="search-bar">
+      <input type="text" class="form-control search-input" id="search-input" placeholder="🔍 ค้นหาชื่อ / ฉายา / ชื่อวัด..." oninput="filterTable()">
+      <div class="filter-group">
+        <label class="filter-label">เขต</label>
+        <div class="zone-tabs">
+          <button class="zone-tab active" onclick="setZone('',this)">ทั้งหมด</button>
+          <button class="zone-tab" onclick="setZone('1',this)">เขต 1</button>
+          <button class="zone-tab" onclick="setZone('2',this)">เขต 2</button>
+          <button class="zone-tab" onclick="setZone('3',this)">เขต 3</button>
+          <button class="zone-tab" onclick="setZone('4',this)">เขต 4</button>
+        </div>
+        <input type="hidden" id="filter-zone" value="">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">สถานะ</label>
+        <select class="filter-select" id="filter-status" onchange="_newFilter=false;filterTable()">
+          <option value="">ทุกสถานะ</option>
+          <option value="waiting">🟡 รอดำเนินการ</option>
+          <option value="sent">🔵 ส่งสำนักกำกับฯแล้ว</option>
+          <option value="sent_stdp">🟣 ส่งสำนัก ศ.ต.ภ. แล้ว</option>
+          <option value="approved">🟢 ได้รับมติแล้ว</option>
+          <option value="incomplete">🔴 เอกสารไม่ครบ</option>
+          <option value="cancelled">⚫ ยกเลิก</option>
+        </select>
+      </div>
+    </div>
+    <div id="stats-bar" class="stats-bar"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.35rem;flex-wrap:wrap;gap:0.5rem">
+      <div style="display:flex;align-items:center;gap:0.75rem">
+        <button id="refresh-btn" onclick="refreshData()" style="display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:99px;border:1.5px solid #e5e7eb;background:#f9fafb;color:#374151;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit">🔄 โหลดใหม่</button>
+        <span id="last-loaded" style="color:#9ca3af;font-size:0.75rem"></span>
+      </div>
+      <span id="result-count" style="color:#6b7280;font-size:0.8rem;font-weight:500"></span>
+    </div>
+    <div id="loading-status" style="display:block;margin-bottom:0.5rem">
+      <div class="skeleton-wrap">
+        <div class="skeleton-row"><div class="skeleton-box" style="width:80px"></div><div class="skeleton-box" style="width:60px"></div><div class="skeleton-box" style="width:110px"></div><div class="skeleton-box" style="flex:1"></div><div class="skeleton-box" style="width:70px"></div></div>
+        <div class="skeleton-row"><div class="skeleton-box" style="width:80px"></div><div class="skeleton-box" style="width:60px"></div><div class="skeleton-box" style="width:110px"></div><div class="skeleton-box" style="flex:1"></div><div class="skeleton-box" style="width:70px"></div></div>
+        <div class="skeleton-row"><div class="skeleton-box" style="width:80px"></div><div class="skeleton-box" style="width:60px"></div><div class="skeleton-box" style="width:110px"></div><div class="skeleton-box" style="flex:1"></div><div class="skeleton-box" style="width:70px"></div></div>
+        <div class="skeleton-row"><div class="skeleton-box" style="width:80px"></div><div class="skeleton-box" style="width:60px"></div><div class="skeleton-box" style="width:110px"></div><div class="skeleton-box" style="flex:1"></div><div class="skeleton-box" style="width:70px"></div></div>
+        <div class="skeleton-row"><div class="skeleton-box" style="width:80px"></div><div class="skeleton-box" style="width:60px"></div><div class="skeleton-box" style="width:110px"></div><div class="skeleton-box" style="flex:1"></div><div class="skeleton-box" style="width:70px"></div></div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th id="th-date" style="display:none;text-align:center;white-space:nowrap">ประทับเวลา</th>
+            <th style="text-align:left;min-width:90px;white-space:nowrap">ประเทศ</th>
+            <th style="text-align:left;min-width:240px">วัด</th>
+            <th style="text-align:left;min-width:220px">ชื่อ ฉายา นามสกุล</th>
+            <th style="text-align:left;min-width:220px">ขออนุมัติแบบ</th>
+            <th style="text-align:center;min-width:190px">สถานะดำเนินการ</th>
+            <th style="text-align:center;min-width:130px">หมายเหตุ</th>
+            <th style="min-width:100px;text-align:center;white-space:nowrap">มติ มส.</th>
+            <th id="th-contact" style="display:none;text-align:center;width:36px;font-weight:400;color:#94a3b8;font-size:0.78rem;white-space:nowrap">ติดต่อ</th>
+            <th id="th-pdf" style="display:none">PDF</th>
+            <th id="th-save" style="display:none"></th>
+          </tr>
+        </thead>
+        <tbody id="status-tbody"></tbody>
+      </table>
+    </div>
+    <div class="card-list" id="card-list"></div>
+    <div id="no-result" style="display:none;text-align:center;padding:2rem;color:var(--text-muted)">ไม่พบข้อมูลที่ค้นหา</div>
+  </div>
+</div>
+
+
+<!-- ADMIN LOGIN MODAL -->
+<div class="modal-overlay" id="admin-login-modal" onclick="if(event.target===this)closeAdminLogin()">
+  <div class="modal" style="max-width:360px;text-align:center">
+    <div style="font-size:2.5rem;margin-bottom:0.5rem">🔐</div>
+    <div style="font-size:1.15rem;font-weight:700;color:var(--primary);margin-bottom:0.25rem">Admin Login</div>
+    <div style="color:var(--text-muted);font-size:0.83rem;margin-bottom:1.25rem">เฉพาะเจ้าหน้าที่กองงานเลขาฯ</div>
+    <div class="form-group" style="text-align:left">
+      <label class="form-label">Password</label>
+      <input type="password" class="form-control" id="admin-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')adminLogin()">
+    </div>
+    <div id="login-error" style="color:var(--danger);font-size:0.85rem;margin-bottom:0.75rem;display:none">รหัสผ่านไม่ถูกต้อง</div>
+    <button class="btn btn-primary btn-full" onclick="adminLogin()">เข้าสู่ระบบ</button>
+
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="detail-modal" onclick="if(event.target===this)closeDetail()">
+  <div class="modal modal-detail" id="detail-content"></div>
+</div>
+
+<!-- PREVIEW MODAL -->
+<div class="modal-overlay" id="preview-modal">
+  <div class="modal" style="max-width:520px">
+    <div style="font-size:1.15rem;font-weight:700;color:var(--primary);margin-bottom:1rem;display:flex;align-items:center;gap:8px">
+      🔍 ตรวจสอบข้อมูลก่อนส่ง
+    </div>
+    <div id="preview-rows" style="margin-bottom:1.25rem"></div>
+    <div style="background:#fff8e1;border:1.5px solid #f59e0b;border-radius:8px;padding:0.7rem 1rem;font-size:0.85rem;color:#92400e;margin-bottom:1.25rem">
+      ⚠️ กรุณาตรวจสอบข้อมูลให้ถูกต้องก่อนกดยืนยัน — หากส่งแล้วต้องติดต่อเจ้าหน้าที่เพื่อแก้ไข
+    </div>
+    <div style="display:flex;gap:0.75rem">
+      <button class="btn btn-outline" style="flex:1;justify-content:center" onclick="closePreview()">← แก้ไข</button>
+      <button class="btn btn-success" style="flex:2;justify-content:center" onclick="confirmSubmit()">✅ ยืนยันส่งคำขอ</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT WAT/COUNTRY MODAL -->
+<div class="modal-overlay" id="edit-wat-modal" onclick="if(event.target===this)closeEditWatModal()">
+  <div class="modal" style="max-width:420px">
+    <div style="font-size:1rem;font-weight:700;color:var(--primary);margin-bottom:1.25rem">✏️ แก้ไขข้อมูลวัด</div>
+    <div class="form-group" style="margin-bottom:1rem">
+      <label class="form-label">ประเทศ</label>
+      <select id="edit-country-input" class="form-control"></select>
+    </div>
+    <div class="form-group" style="margin-bottom:1rem">
+      <label class="form-label">วัด</label>
+      <input type="text" id="edit-wat-input" class="form-control" placeholder="ชื่อวัด...">
+    </div>
+    <div class="form-group" style="margin-bottom:1.25rem">
+      <label class="form-label">ชื่อ ฉายา นามสกุล</label>
+      <input type="text" id="edit-name-input" class="form-control" placeholder="ชื่อ ฉายา นามสกุล...">
+    </div>
+    <div style="display:flex;gap:0.75rem">
+      <button class="btn btn-primary" style="flex:1" onclick="saveEditWat()">บันทึก</button>
+      <button class="btn" style="flex:1;background:#f1f5f9;color:var(--text)" onclick="closeEditWatModal()">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<!-- MOTI URL MODAL -->
+<!-- DOC GUIDE MODAL -->
+<div class="modal-overlay" id="docguide-modal">
+  <div class="modal" style="max-width:460px">
+    <div style="font-size:1rem;font-weight:700;color:var(--primary);margin-bottom:1rem">📋 ก่อนดูเอกสาร ควรทราบว่า</div>
+    <p style="font-size:0.85rem;color:#6b7280;margin:0 0 0.9rem">เอกสารแบ่งเป็น <strong>2 ส่วน</strong> ตามผู้รับรอง</p>
+    <div style="background:#eff6ff;border-radius:10px;padding:0.85rem 1rem;margin-bottom:0.75rem">
+      <div style="font-weight:700;color:#1d4ed8;margin-bottom:0.4rem">ส่วนที่ 1 — เอกสารส่วนตัว</div>
+      <div style="font-size:0.82rem;color:#374151;line-height:1.7">เจ้าตัวเซ็นรับรองเอง<br>เช่น สำเนาบัตรประชาชน · สำเนาทะเบียนบ้าน · สำเนาปริญญาบัตร · สำเนาใบเกียรติบัตร · สำเนาวุฒิการศึกษา</div>
+    </div>
+    <div style="background:#f0fdf4;border-radius:10px;padding:0.85rem 1rem;margin-bottom:1.1rem">
+      <div style="font-weight:700;color:#15803d;margin-bottom:0.4rem">ส่วนที่ 2 — เอกสารทางราชการ</div>
+      <div style="font-size:0.82rem;color:#374151;line-height:1.7">เจ้าอาวาสหรือผู้ปกครองเซ็นรับรอง<br>เช่น ประวัติการทำงาน · หนังสือรับรองจากวัด</div>
+    </div>
+    <div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:10px;padding:0.7rem 1rem;margin-bottom:1rem;display:flex;align-items:flex-start;gap:0.5rem">
+      <span style="font-size:1rem;margin-top:1px">⚠️</span>
+      <span style="font-size:0.82rem;color:#92400e;line-height:1.6"><strong>กรุณาอ่านให้ครบก่อนเตรียมเอกสาร</strong> เพื่อป้องกันเอกสารไม่ครบหรือผิดประเภทผู้รับรอง</span>
+    </div>
+    <div style="display:flex;gap:0.75rem">
+      <button class="btn btn-outline" style="flex:1;justify-content:center" onclick="closeDocGuide()">ปิด</button>
+      <a id="docguide-link" href="#" target="_blank" rel="noopener" class="btn btn-primary" style="flex:2;justify-content:center;text-decoration:none" onclick="closeDocGuide()">📎 ดูเอกสารตัวอย่าง</a>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="moti-modal">
+  <div class="modal" style="max-width:420px">
+    <div style="font-size:1rem;font-weight:700;color:var(--primary);margin-bottom:1rem">📄 ลิงก์มติ</div>
+    <input type="url" id="moti-url-input" class="form-control" placeholder="https://..." style="margin-bottom:1rem">
+    <div style="display:flex;gap:0.75rem">
+      <button class="btn btn-outline" style="flex:1;justify-content:center" onclick="closeMotiModal()">ยกเลิก</button>
+      <button class="btn btn-primary" style="flex:2;justify-content:center" onclick="saveMotiUrl()">💾 บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- DUPLICATE MODAL -->
+<div class="modal-overlay" id="dup-modal">
+  <div class="modal" style="max-width:420px">
+    <div style="font-size:2.5rem;margin-bottom:0.75rem">🔁</div>
+    <div style="font-size:1.1rem;font-weight:700;color:var(--primary);margin-bottom:0.5rem">พบข้อมูลที่อาจซ้ำกัน</div>
+    <div id="dup-detail" style="background:#fef9ec;border:1.5px solid #f59e0b;border-radius:10px;padding:0.85rem 1rem;font-size:0.88rem;color:#92400e;margin-bottom:1rem;line-height:1.7;text-align:left"></div>
+    <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1.25rem">ต้องการส่งคำขอนี้ต่อไปอยู่ไหม?</div>
+    <div style="display:flex;gap:0.75rem">
+      <button class="btn btn-outline" style="flex:1;justify-content:center" onclick="closeDupModal()">← ยกเลิก</button>
+      <button class="btn btn-primary" style="flex:1.5;justify-content:center" onclick="proceedAfterDup()">ส่งต่อไป →</button>
+    </div>
+  </div>
+</div>
+
+<!-- SENDING OVERLAY -->
+<div id="sending-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;flex-direction:column;align-items:center;justify-content:center;gap:1rem">
+  <div style="width:52px;height:52px;border:5px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite"></div>
+  <div style="color:#fff;font-size:1.1rem;font-weight:600">กำลังส่งคำขอ...</div>
+  <div style="color:rgba(255,255,255,0.7);font-size:0.85rem">กรุณารอสักครู่</div>
+</div>
+
+<!-- SUCCESS MODAL -->
+<div class="modal-overlay" id="success-modal">
+  <div class="modal">
+    <div style="font-size:3rem;margin-bottom:0.75rem">📨</div>
+    <div style="font-size:1.25rem;font-weight:700;color:var(--primary);margin-bottom:0.5rem">ส่งข้อมูลเรียบร้อยแล้ว</div>
+    <div style="color:var(--text-muted);font-size:0.9rem;line-height:1.75;margin-bottom:1.25rem">
+      คำขอของท่านอยู่ในระบบแล้ว 🗂️<br>
+      เจ้าหน้าที่จะดำเนินการในลำดับถัดไป
+    </div>
+    <div style="display:flex;flex-direction:column;gap:0.6rem">
+      <button class="btn btn-primary btn-full" onclick="goCheckStatus()">🔍 ตรวจสอบสถานะของฉัน →</button>
+      <button class="btn btn-outline btn-full" onclick="closeModal()">✦ รับทราบ</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="delete-modal">
+  <div class="modal">
+    <div style="font-size:2.5rem;margin-bottom:0.75rem">🗑️</div>
+    <div style="font-size:1.1rem;font-weight:700;color:#dc2626;margin-bottom:0.5rem">ลบรายการนี้?</div>
+    <div id="delete-modal-name" style="color:var(--text-muted);font-size:0.9rem;margin-bottom:1.25rem;text-align:center"></div>
+    <div style="display:flex;gap:0.75rem">
+      <button class="btn btn-outline btn-full" onclick="closeDeleteModal()">ยกเลิก</button>
+      <button class="btn btn-full" style="background:#dc2626;color:white;border:none" onclick="confirmDelete()">ลบเลย</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// SHA-256 ของ password จริง (ไม่เก็บ plaintext ใน client)
+const ADMIN_HASH = 'fe2592b42a727e977f055947385b709cc82b16b9a87f88c6abf3900d65d0cdc3';
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+// sanitize URL — ยอมรับเฉพาะ http/https
+function safeUrl(url) {
+  if (!url) return null;
+  // ลอง parse ตรงๆ ก่อน
+  const candidates = [url.trim(), url.split(' / ').pop().trim()];
+  for (const u of candidates) {
+    try {
+      const parsed = new URL(u);
+      if (parsed.protocol === 'http:' || parsed.protocol === 'https:') return u;
+    } catch(e) {}
+  }
+  // ดึง URL ออกจาก text (กรณีมี text นำหน้า)
+  const m = url.match(/https?:\/\/\S+/);
+  return m ? m[0] : null;
+}
+
+const WATS = {
+  france:['วัดพระเชตุพน ลียง','วัดพระเชตุพน กรุงปารีส','วัดพระธรรมกายบอร์คโด','วัดมหาพุทธาราม กรุงปารีส','วัดพระธรรมกายปารีส','วัดอโนมาลัย ฝรั่งเศส','วัดภูธาราม','วัดสว่าง'],
+  netherlands:['วัดพุทธาราม','วัดพุทธวิหาร อัมสเตอร์ดัม','วัดพระธรรมกายเนเธอร์แลนด์','วัดพุทธิรัตนาราม'],
+  belgium:['วัดธัมมปทีป','วัดพระธรรมกายเบเนลักซ์','วัดไทยธรรมาราม เบลเยียม','วัดพุทธาราม เบลเยียม'],
+  luxembourg:['วัดใหม่มงคล ไทย-ลักเซมเบิร์ก'],
+  germany:['วัดพุทธาราม นครเบอร์ลิน','วัดพุทธวิหาร กรุงเบอร์ลิน','วัดสันติวราราม เยอรมนี','วัดไทยมิวนิค','วัดไทยพุทธอาภา','วัดบุญญาราม','วัดสังฆวิหาร สตุตการ์ต เยอรมนี','วัดพุทธธรรม ไฟรซิ่ง เยอรมนี','วัดไทยบีเบอร์บาครัตนาราม','วัดพระธาตุเซาว์เวอร์ลันด์ สหพันธ์สาธารณรัฐเยอรมนี','วัดสังฆทานไทย-เยอรมัน','วัดไทยเอาก์สบวร์ก','วัดพุทธภาวนาโคโลญจน์ เยอรมนี','วัดพุทธรักษา เยอรมนี','วัดไทยสามัคคี เยอรมนี','วัดพุทธไทยเนอร์นแบร์ก','วัดพระราชพรหมยาน (ท่าซุง)','วัดโรจนกรรัตนาราม เยอรมนี','วัดพุทธอังคีรสาราม บาลิงเง่น เยอรมนี','วัดพระธรรมกายบาวาเรีย','วัดพระธรรมกายชวาร์ซวัลด์','วัดพระธรรมกายไรน์แลนด์','วัดพระธรรมกายฮัมบวร์ก','วัดพุทธนอร์ดไรน์ เวสท์ฟาเลน','วัดพระธรรมกายเบอร์ลิน','วัดพุทธไฮล์บรอนน์','วัดพุทธนันทาราม เยอรมนี','วัดธรรมวิสุทธาราม','วัดพุทธปิยวราราม เยอรมนี','วัดพระธาตุดอยสุเทพ เยอรมนี','วัดพุทธมงคลวราราม เยอรมนี','วัดเจริญธรรม ลึกเด สหพันธ์สาธารณรัฐเยอรมนี','วัดธรรมวิหาร ฮันโนเฟอร์','วัดมหาธาตุ 338 เครเฟลด์ เยอรมนี','วัดพุทธารามเซาว์เวอร์ลันด์ เยอรมนี','วัดศิษย์วัดท่าซุง','วัดไทยโบเด้นเซ','วัดพระธาตุศรีจอมทอง เยอรมนี','วัดเทพวงศาราม ลายน์บวร์ก','วัดสมเด็จ เยอรมนี','วัดมหาธาตุ เยอรมนี','วัดธรรมะศรัทธาราม','วัดพุทธเมตตา วาร์บวร์ก เยอรมนี','วัดไทย ไลพ์ซิก','วัดไทยชวาร์ซวาลด์ เยอรมนี','วัดธรรมชัยมงคล','วัดปิติธรรมวนาราม','วัดพุทธวิปัสสนา','วัดเพื่อพระนิพพาน','วัดไทย เอมเมอริช','วัดเทิดพระเกียรติเพื่อสันติภาพ','วัดพุทธกิตติเมธี'],
+  estonia:['วัดพระธาตุดอยสุเทพ เอสโตเนีย'],
+  denmark:['วัดพระธรรมกายเดนมาร์ก','วัดไทยแทรนโดรป','วัดพุทธธรรมวิสุทธิ','วัดพระธรรมกายเชลแลนด์','วัดแดนไทย','วัดไทยเดนมาร์กพรหมวิหาร','วัดแดนไทย ออลบอร์ก'],
+  norway:['วัดไทยนอร์เวย์','วัดพุทธชินวงศ์ นอร์เวย์','วัดหลวงพ่อสด นอร์เวย์','วัดไทยธรรมดา นอร์เวย์','วัดไทยนอร์เวย์ บาร์เก้น','สถานปฏิบัติธรรมวัดสันโป่ง','วัดพระธรรมกายนอร์เวย์','วัดไทยการ์เดอร์โมน','วัดพระพุทธภาสฯ นอร์เวย์','วัดพระธรรมกายเอกเกอร์ซุนด์','วัดป่าโพธิภูมิวัน','วัดพุทธแดนธรรม','วัดปากน้ำ ยุโรป','วัดอุบลมณี'],
+  finland:['วัดพุทธาราม ฟินแลนด์','วัดป่าวิปัสสนากรรมฐานฟินแลนด์'],
+  sweden:['วัดพุทธาราม แวร์มเดอ สวีเดน','วัดธรรมมังคลาราม','วัดสยามินทร์มังคลาราม','วัดพระธรรมกายนอร์ธสวีเดน','วัดพระธรรมกายบูโรส','วัดพระธรรมกายสตอกโฮล์ม','วัดพุทธโสธร อุปซอลา สวีเดน','วัดพุทธาราม คาร์ลสตาด','วัดพุทธาราม บูเด้น สวีเดน','วัดพุทธภาวนาเวสเตอร์โรส','วัดพุทธาราม เฟรดริก้า สวีเดน','วัดไทยอุปซอลา','วัดไทนอรเท่นเยีย','วัดพุทธาราม รากุนด้า'],
+  iceland:['วัดพระธรรมกายไอซ์แลนด์'],
+  switzerland:['วัดศรีนครินทรวราราม','วัดพุทธวิหาร เอชาลองส์','วัดไทยติชิโน่','วัดพระธรรมกายสวิตเซอร์แลนด์'],
+  austria:['วัดพุทธธรรม เมืองกราซ ออสเตรีย','วัดพระธรรมกายออสเตรีย','วัดพุทธเวียนนา','วัดไทยสามัคคีวราราม-ทิโรล','วัดไทยออสเตรียธรรมาราม','วัดพุทธสดับพิน','วัดแสงธรรมปทีป','วัดไทยอินน์สบรูค (ธรรมวิสุทธิ)'],
+  italy:['วัดพุทธเวนิส','วัดพระธรรมกายอิตาลี','วัดไทยอิตาลีฟริอูลี'],
+  greece:['วัดไทยกรุงเอเธนส์วนาราม'],
+  czech:['วัดธรรมกิตติวงศ์ กรุงปราก สาธารณรัฐเช็ก'],
+  hungary:['วัดไทยรัตนประทีป'],
+  malta:['วัดพุทธมอลต้า'],
+};
+const ZONES = {france:'1',netherlands:'1',belgium:'1',luxembourg:'1',germany:'2',estonia:'2',sweden:'3',norway:'3',denmark:'3',finland:'3',iceland:'3',switzerland:'4',austria:'4',italy:'4',greece:'4',czech:'4',hungary:'4',malta:'4'};
+const COUNTRY_NAMES = {france:'ฝรั่งเศส',netherlands:'เนเธอร์แลนด์',belgium:'เบลเยียม',luxembourg:'ลักแซมบวร์ก',germany:'เยอรมนี',estonia:'เอสโตเนีย',sweden:'สวีเดน',norway:'นอร์เวย์',denmark:'เดนมาร์ก',finland:'ฟินแลนด์',iceland:'ไอซ์แลนด์',switzerland:'สวิตเซอร์แลนด์',austria:'ออสเตรีย',italy:'อิตาลี',greece:'กรีซ',czech:'เช็ก',hungary:'ฮังการี',malta:'มอลต้า'};
+const TYPE_NAMES = {1:'ขอต่ออายุหนังสือเดินทาง (พระธรรมทูต)',2:'ขออนุมัติทำเล่มใหม่ (พระธรรมทูต)',3:'ขอต่ออายุ ศตภ. (เล่มน้ำตาล)'};
+const ZONE_INFO = {
+  '1':{name:'เขต 1',countries:'เนเธอร์แลนด์ • เบลเยี่ยม • ฝรั่งเศส • ลักเซมเบิร์ก'},
+  '2':{name:'เขต 2',countries:'สหพันธ์สาธารณรัฐเยอรมนี'},
+  '3':{name:'เขต 3',countries:'เดนมาร์ก • นอร์เวย์ • ฟินแลนด์ • สวีเดน • ไอซ์แลนด์'},
+  '4':{name:'เขต 4',countries:'กรีซ • อิตาลี • ฮังการี • สาธารณรัฐเช็ก • สวิตเซอร์แลนด์ • ออสเตรีย'},
+};
+const STATUS_CONFIG = {
+  waiting:   {label:'รอดำเนินการ',          cls:'badge-waiting'},
+  sent:      {label:'ส่งสำนักกำกับฯแล้ว',  cls:'badge-sent'},
+  sent_stdp: {label:'ส่งสำนัก ศ.ต.ภ. แล้ว', cls:'badge-sent-stdp'},
+  approved:  {label:'ได้รับมติแล้ว',        cls:'badge-approved'},
+  incomplete:{label:'เอกสารไม่ครบ',         cls:'badge-incomplete'},
+  cancelled: {label:'ยกเลิก',               cls:'badge-cancelled'},
+};
+
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwQnL3euaHDV7rVK4w6z6OLmQNZ579cghV9rgiXL5RC3XZWGoFzawSfNKbCBVf-grQY/exec';
+
+// แปลงชื่อประเทศภาษาไทย → รหัส
+const COUNTRY_MAP = {
+  'ฝรั่งเศส':'france','ประเทศฝรั่งเศส':'france','ฝรั่งเสศ':'france','ประเทศฝรั่งเสศ':'france',
+  'เนเธอร์แลนด์':'netherlands','ประเทศเนเธอร์แลนด์':'netherlands',
+  'เบลเยียม':'belgium','เบลเยี่ยม':'belgium','ประเทศเบลเยียม':'belgium','ประเทศเบลเยี่ยม':'belgium',
+  'ลักแซมบวร์ก':'luxembourg','ลักเซมเบิร์ก':'luxembourg','ประเทศลักแซมบวร์ก':'luxembourg','ประเทศลักเซมเบิร์ก':'luxembourg',
+  'เยอรมนี':'germany','ประเทศเยอรมนี':'germany','สหพันธ์สาธารณรัฐเยอรมนี':'germany',
+  'เอสโตเนีย':'estonia','ประเทศเอสโตเนีย':'estonia',
+  'สวีเดน':'sweden','ประเทศสวีเดน':'sweden',
+  'นอร์เวย์':'norway','ประเทศนอร์เวย์':'norway',
+  'เดนมาร์ก':'denmark','ประเทศเดนมาร์ก':'denmark',
+  'ฟินแลนด์':'finland','ประเทศฟินแลนด์':'finland',
+  'ไอซ์แลนด์':'iceland','ประเทศไอซ์แลนด์':'iceland',
+  'สวิตเซอร์แลนด์':'switzerland','ประเทศสวิตเซอร์แลนด์':'switzerland','สวิส':'switzerland',
+  'ออสเตรีย':'austria','ประเทศออสเตรีย':'austria',
+  'อิตาลี':'italy','ประเทศอิตาลี':'italy',
+  'กรีซ':'greece','ประเทศกรีซ':'greece',
+  'เช็ก':'czech','สาธารณรัฐเช็ก':'czech','ประเทศเช็ก':'czech',
+  'ฮังการี':'hungary','ประเทศฮังการี':'hungary',
+  'มอลต้า':'malta','ประเทศมอลต้า':'malta',
+};
+
+let selectedType = 0;
+let selectedFile = null;
+let requests = [];
+let isLoadingData = false;
+const _adminState = (() => {
+  let _v = false;
+  return { get: () => _v, set: (v) => { if (typeof v === 'boolean') _v = v; } };
+})();
+Object.defineProperty(window, 'isAdmin', { get: () => _adminState.get(), set: () => {}, enumerable: false });
+let newRequestRefs = new Set();
+let readRefs = new Set();
+let lastSubmittedName = '';
+
+function updateAdminBadge() {}
+
+function getColVal(row, ...keywords) {
+  for (const key of Object.keys(row)) {
+    for (const kw of keywords) {
+      if (key.includes(kw)) return row[key] || '';
+    }
+  }
+  return '';
+}
+
+function extractStatusDate(statusText) {
+  if (!statusText) return '';
+  const m = statusText.match(/(\d{1,2})[./](\d{1,2})[./](\d{2,4})/);
+  return m ? m[0] : '';
+}
+
+function mapStatus(statusText) {
+  const s = (statusText || '').trim();
+  if (!s) return 'waiting';
+  if (s.includes('รอดำเนินการ')) return 'waiting';
+  if (s.includes('ยกเลิก')) return 'cancelled';
+  if (s.includes('ได้รับมติ') || s.includes('ได้มติ')) return 'approved';
+  if (s.includes('ไม่เรียบร้อย') || s.includes('ขอให้ส่งใหม่') || s.includes('ไม่ครบ')) return 'incomplete';
+  if (s.includes('ศตภ') || s.includes('ศ.ต.ภ')) return 'sent_stdp';
+  if (s.includes('ส่ง') || s.includes('มีการส่ง')) return 'sent';
+  return 'waiting';
+}
+
+function loadFromSheets() {
+  if (isLoadingData) return;
+  isLoadingData = true;
+  const statusEl = document.getElementById('loading-status');
+  const refreshBtn = document.getElementById('refresh-btn');
+  if (statusEl) { statusEl.style.display = 'block'; }
+  const tableWrap = document.querySelector('#page-status .table-wrap');
+  const cardList = document.getElementById('card-list');
+  if (tableWrap) tableWrap.style.visibility = 'hidden';
+  if (cardList) cardList.style.visibility = 'hidden';
+  if (refreshBtn) { refreshBtn.disabled = true; refreshBtn.textContent = '⏳ กำลังโหลด...'; }
+
+  fetch(SCRIPT_URL)
+    .then(r => r.json())
+    .then(json => {
+      if (json.status !== 'ok') throw new Error('Script error');
+      const mapped = json.data.map((row, i) => {
+        const zone = (row['เขต'] || '').replace('เขต', '').trim();
+        const countryRaw = getColVal(row, 'ประเทศ');
+        const country = COUNTRY_MAP[countryRaw.trim()] || countryRaw.trim().toLowerCase().replace('ประเทศ','').trim() || 'other';
+        const wat = getColVal(row, 'วัด');
+        const name = getColVal(row, 'ชื่อ', 'ฉายา', 'นามสกุล');
+        const type = getColVal(row, 'ขออนุมัติ', 'ประเภท');
+        const statusRaw = getColVal(row, 'สถานะ');
+        const moti = getColVal(row, 'มติ');
+        const note = getColVal(row, 'หมายเหตุ');
+        const pdfLink = getColVal(row, 'PDF', 'ส่งเอกสาร', 'pdf');
+        const contact = getColVal(row, 'ติดต่อ', 'contact');
+        const dateRaw = getColVal(row, 'ประทับเวลา', 'วันที่');
+        const dateStr = dateRaw ? new Date(dateRaw).toLocaleString('th-TH', {day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit'}) : '';
+        return {
+          _idx: i,
+          ref: 'REF-' + String(i+1).padStart(5,'0'),
+          name, wat, country, zone,
+          type, note,
+          status: (moti && moti.includes('http')) ? 'approved' : (mapStatus(statusRaw) === 'sent' && type.includes('ศตภ')) ? 'sent_stdp' : mapStatus(statusRaw),
+          statusText: statusRaw,
+          motiLink: moti,
+          pdfLink: pdfLink,
+          date: dateStr,
+          dateMs: dateRaw ? new Date(dateRaw).getTime() : 0,
+          contact: contact || '',
+          _sheetName: row['_sheetName'] || '',
+          _sheetRow: row['_sheetRow'] || 0,
+        };
+      }).filter(r => r.name && r.name.trim());
+      requests = mapped;
+      isLoadingData = false;
+      renderStatsBar();
+      const _zone = document.getElementById('filter-zone')?.value;
+      const _status = document.getElementById('filter-status')?.value;
+      const _q = document.getElementById('search-input')?.value;
+      if (_zone || _status || _q) { filterTable(); } else { renderStatusTable(); }
+      if (statusEl) statusEl.style.display = 'none';
+      if (tableWrap) tableWrap.style.visibility = '';
+      if (cardList) cardList.style.visibility = '';
+      const lastEl = document.getElementById('last-loaded');
+      if (lastEl) lastEl.textContent = 'โหลดล่าสุด: ' + new Date().toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'}) + ' น.';
+    })
+    .catch(err => {
+      console.error('โหลดข้อมูลไม่ได้:', err);
+      if (statusEl) {
+        statusEl.style.display = 'block';
+        statusEl.innerHTML = '<div style="padding:1rem;text-align:center;color:#dc2626;background:#fff5f5;border-radius:10px;border:1.5px solid #fca5a5">⚠️ โหลดข้อมูลไม่ได้ — กรุณากด <strong>โหลดใหม่</strong> อีกครั้ง</div>';
+      }
+    })
+    .finally(() => {
+      isLoadingData = false;
+      const refreshBtn = document.getElementById('refresh-btn');
+      if (refreshBtn) { refreshBtn.disabled = false; refreshBtn.textContent = '🔄 โหลดใหม่'; }
+    });
+}
+
+function refreshData() {
+  isLoadingData = false;
+  loadFromSheets();
+}
+
+// NAV
+function showPage(p, btn) {
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('page-' + p).classList.add('active');
+  if(btn) btn.classList.add('active');
+  if(p==='status') renderStatusTable();
+  const bar = document.getElementById('sticky-submit-bar');
+  if(bar) bar.style.display = p === 'form' ? '' : 'none';
+}
+
+// COMBOBOX
+let _watOptions = [];
+function _watSetValue(val) {
+  document.getElementById('wat-input').value = val;
+  document.getElementById('wat-select').value = val;
+  document.getElementById('wat-dropdown').classList.remove('show');
+  updateSummary();
+}
+function _watRenderDropdown(filter) {
+  const dd = document.getElementById('wat-dropdown');
+  const q = filter.trim().toLowerCase();
+  const filtered = q ? _watOptions.filter(w => w.toLowerCase().includes(q)) : _watOptions;
+  if (!filtered.length) {
+    dd.innerHTML = '<div class="wat-opt no-result">ไม่พบวัดที่ค้นหา</div>';
+  } else {
+    dd.innerHTML = filtered.map(w => `<div class="wat-opt" onmousedown="event.preventDefault();_watSetValue('${w.replace(/'/g,"&#39;")}')">${w}</div>`).join('');
+  }
+  dd.classList.add('show');
+}
+document.addEventListener('click', e => {
+  if (!document.getElementById('wat-combo-wrap').contains(e.target))
+    document.getElementById('wat-dropdown').classList.remove('show');
+});
+
+// FORM
+function updateWats() {
+  const country = document.getElementById('country-select').value;
+  const inp = document.getElementById('wat-input');
+  const banner = document.getElementById('zone-banner');
+  _watSetValue('');
+  document.getElementById('wat-dropdown').classList.remove('show');
+  if (!country) {
+    _watOptions = [];
+    inp.placeholder = '— เลือกประเทศก่อน —';
+    inp.disabled = true;
+    banner.classList.remove('show');
+    updateSummary(); return;
+  }
+  _watOptions = WATS[country]||[];
+  inp.placeholder = '— พิมพ์หรือเลือกวัด —';
+  inp.disabled = false;
+  inp.oninput = () => _watRenderDropdown(inp.value);
+  inp.onfocus = () => _watRenderDropdown(inp.value);
+  inp.onblur = () => setTimeout(() => document.getElementById('wat-dropdown').classList.remove('show'), 150);
+  const zone = ZONES[country];
+  if(zone && ZONE_INFO[zone]){
+    document.getElementById('zone-name').textContent = ZONE_INFO[zone].name;
+    document.getElementById('zone-countries').textContent = ZONE_INFO[zone].countries;
+    banner.classList.add('show');
+  }
+  updateSummary();
+}
+
+function selectType(n) {
+  selectedType = n;
+  [1,2,3].forEach(i => document.getElementById('type-'+i).classList.toggle('selected', i===n));
+  document.getElementById('err-type').style.display = 'none';
+  updateSummary();
+}
+
+function fileSelected(input) {
+  if(input.files[0]){
+    const f = input.files[0];
+    if(f.size > 10 * 1024 * 1024){
+      input.value = '';
+      selectedFile = null;
+      document.getElementById('file-label').textContent = 'รองรับ PDF ขนาดไม่เกิน 10MB';
+      document.getElementById('file-area').style.borderColor = 'var(--danger, #dc2626)';
+      document.getElementById('err-file').textContent = 'ไฟล์ใหญ่เกิน 10MB กรุณาเลือกไฟล์ใหม่';
+      document.getElementById('err-file').style.display = 'block';
+      updateSummary();
+      return;
+    }
+    selectedFile = f;
+    document.getElementById('file-label').textContent = '✅ '+selectedFile.name+' ('+(selectedFile.size/1024/1024).toFixed(2)+' MB)';
+    document.getElementById('file-area').style.borderColor = 'var(--success)';
+    document.getElementById('err-file').style.display = 'none';
+    updateSummary();
+  }
+}
+
+function setSbRow(id, iconId, value, empty) {
+  const el = document.getElementById(id);
+  const ic = document.getElementById(iconId);
+  if(value) {
+    el.textContent = value; el.classList.remove('empty');
+    ic.textContent = '✅';
+  } else {
+    el.textContent = empty; el.classList.add('empty');
+    ic.textContent = '⬜';
+  }
+}
+
+function updateFormSteps() {
+  const s1 = document.getElementById('country-select').value &&
+              document.getElementById('wat-select').value &&
+              document.getElementById('fname').value.trim() &&
+              document.getElementById('lname').value.trim();
+  const s2 = selectedType > 0;
+  const s3 = selectedFile && document.getElementById('contact').value.trim();
+
+  const setStep = (n, done, active) => {
+    const el = document.getElementById('fs-'+n);
+    el.classList.toggle('done', done);
+    el.classList.toggle('active', active);
+    if(done) el.querySelector('.fs-dot').textContent = '✓';
+    else el.querySelector('.fs-dot').textContent = String(n);
+  };
+
+  setStep(1, !!s1, !s1);
+  document.getElementById('fs-line-1').classList.toggle('done', !!s1);
+  setStep(2, !!s2, !!s1 && !s2);
+  document.getElementById('fs-line-2').classList.toggle('done', !!s2);
+  setStep(3, !!s3, !!s1 && !!s2 && !s3);
+}
+
+function updateSummary() {
+  updateFormSteps();
+  const country = document.getElementById('country-select').value;
+  const wat = document.getElementById('wat-select').value;
+  const fname = document.getElementById('fname').value.trim();
+  const ftitle = document.getElementById('ftitle').value.trim();
+  const lname = document.getElementById('lname').value.trim();
+  const contact = document.getElementById('contact').value.trim();
+
+  // Zone banner in sidebar
+  const zone = country ? ZONES[country] : null;
+  const sbZone = document.getElementById('sb-zone');
+  if(zone && ZONE_INFO[zone]) {
+    document.getElementById('sb-zone-name').textContent = 'คำขอนี้จะถูกส่งไปที่ ' + ZONE_INFO[zone].name;
+    document.getElementById('sb-zone-countries').textContent = ZONE_INFO[zone].countries;
+    sbZone.classList.add('show');
+  } else {
+    sbZone.classList.remove('show');
+  }
+
+  setSbRow('sb-country','sb-icon-country', country ? COUNTRY_NAMES[country] : '', '— ยังไม่ได้เลือก —');
+  setSbRow('sb-wat','sb-icon-wat', wat||'', '— ยังไม่ได้เลือก —');
+  const fullName = [fname, ftitle ? '('+ftitle+')' : '', lname].filter(Boolean).join(' ');
+  setSbRow('sb-name','sb-icon-name', fullName||'', '— ยังไม่ได้กรอก —');
+  setSbRow('sb-type','sb-icon-type', selectedType ? TYPE_NAMES[selectedType] : '', '— ยังไม่ได้เลือก —');
+  setSbRow('sb-file','sb-icon-file', selectedFile ? selectedFile.name : '', '— ยังไม่ได้แนบ —');
+  setSbRow('sb-contact','sb-icon-contact', contact||'', '— ยังไม่ได้กรอก —');
+}
+
+// add live summary on input
+['fname','ftitle','lname','contact'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updateSummary);
+});
+// wat-select เป็น hidden input แล้ว — updateSummary ถูกเรียกจาก _watSetValue แทน
+
+function validate() {
+  let ok = true;
+  const checks = [
+    ['country-select','err-country'],
+    ['wat-select','err-wat'],
+    ['fname','err-fname'],
+    ['lname','err-lname'],
+    ['contact','err-contact'],
+  ];
+  checks.forEach(([id, errId]) => {
+    const el = document.getElementById(id);
+    const err = document.getElementById(errId);
+    if(!el.value.trim()){ err.style.display='block'; el.classList.add('error'); ok=false; }
+    else { err.style.display='none'; el.classList.remove('error'); }
+  });
+  if(!selectedType){ document.getElementById('err-type').style.display='block'; ok=false; }
+  // if(!selectedFile){ document.getElementById('err-file').style.display='block'; ok=false; }
+  return ok;
+}
+
+function submitForm() {
+  if(!validate()) {
+    const firstErr = document.querySelector('.form-control.error, .field-error[style*="block"]');
+    if(firstErr) firstErr.scrollIntoView({behavior:'smooth', block:'center'});
+    return;
+  }
+  // เช็ค duplicate
+  const fname = document.getElementById('fname').value.trim();
+  const ftitle = document.getElementById('ftitle').value.trim();
+  const lname = document.getElementById('lname').value.trim();
+  const fullName = [fname, ftitle, lname].filter(Boolean).join(' ');
+  const wat = document.getElementById('wat-select').value;
+  const typeName = TYPE_NAMES[selectedType];
+  const dup = requests.find(r => r.name === fullName && r.wat === wat && r.type === typeName);
+  if(dup) {
+    document.getElementById('dup-detail').innerHTML =
+      `<strong>${fullName}</strong><br>วัด: ${wat}<br>ประเภท: ${typeName}<br><br>เคยส่งคำขอนี้ไปแล้วในครั้งนี้`;
+    document.getElementById('dup-modal').classList.add('open');
+    return;
+  }
+  // แสดง preview modal
+  const country = document.getElementById('country-select').value;
+  const zone = ZONES[country]||'?';
+  const rows = [
+    ['ประเทศ', COUNTRY_NAMES[country], true],
+    ['เขต', 'เขต ' + zone + ' — ' + (ZONE_INFO[zone]?.name||''), false],
+    ['วัด', document.getElementById('wat-select').value, true],
+    ['ชื่อ', document.getElementById('fname').value, true],
+    ['ฉายา', document.getElementById('ftitle').value || '', false],
+    ['นามสกุล', document.getElementById('lname').value, true],
+    ['ประเภทคำขอ', TYPE_NAMES[selectedType], true],
+    ['ติดต่อ', document.getElementById('contact').value, true],
+    ['ไฟล์แนบ', selectedFile ? selectedFile.name : '', 'ยังไม่ได้แนบ'],
+  ];
+  document.getElementById('preview-rows').innerHTML = rows.map(([l,v,required]) => {
+    const missing = required && !v;
+    const emptyMsg = typeof required === 'string' ? required : 'ยังไม่ได้กรอก';
+    const display = v || (required ? `<span style="color:#dc2626;font-weight:700">⚠ ${emptyMsg}</span>` : '<span style="color:#94a3b8">—</span>');
+    const bg = missing ? 'background:#fff5f5;border-radius:6px;margin:2px 0;padding:7px 6px;' : 'padding:7px 0;';
+    return `<div style="display:flex;justify-content:space-between;${bg}border-bottom:1px solid #f1f5f9;font-size:0.9rem">
+      <span style="color:${missing?'#dc2626':'var(--text-muted)'};min-width:90px">${l}</span>
+      <span style="font-weight:600;text-align:right">${display}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('preview-modal').classList.add('open');
+}
+
+function closePreview() {
+  document.getElementById('preview-modal').classList.remove('open');
+}
+
+function confirmSubmit() {
+  closePreview();
+  const overlay = document.getElementById('sending-overlay');
+  if (overlay) { overlay.style.display = 'flex'; }
+  const country = document.getElementById('country-select').value;
+  lastSubmittedName = [document.getElementById('fname').value, document.getElementById('ftitle').value, document.getElementById('lname').value].filter(Boolean).join(' ');
+  const submitData = {
+    zone: String(ZONES[country] || '1'),
+    country,
+    wat: document.getElementById('wat-select').value,
+    name: lastSubmittedName,
+    type: TYPE_NAMES[selectedType],
+    contact: document.getElementById('contact').value.trim(),
+  };
+
+  const submitBtn = document.querySelector('#preview-modal .btn-success');
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '⏳ กำลังส่ง...'; }
+
+  const doSend = (pdfBase64, pdfName) => {
+    const payload = { action: 'submitRequest', ...submitData };
+    if (pdfBase64) { payload.pdfBase64 = pdfBase64; payload.pdfName = pdfName; }
+    fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+    })
+    .then(r => r.json())
+    .then(res => {
+      if (res.status !== 'ok') throw new Error(res.message || 'error');
+      const ref = 'REF-'+Date.now().toString().slice(-6);
+      requests.unshift({
+        ref, zone: ZONES[country]||'?',
+        name: submitData.name, wat: submitData.wat, country,
+        type: submitData.type, status:'waiting', note:'',
+        contact: submitData.contact || '',
+        pdfLink: res.pdfUrl || '',
+        date: new Date().toLocaleString('th-TH', {day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit'}),
+        isNew: true, _sheetName: res.sheetName || '', _sheetRow: res.rowNum || 0,
+      });
+      requests.forEach((x, idx) => x._idx = idx);
+      newRequestRefs.add(ref);
+      document.getElementById('success-modal').classList.add('open');
+      resetForm();
+    })
+    .catch(err => {
+      alert('เกิดข้อผิดพลาด: ' + err.message + '\nกรุณาลองใหม่อีกครั้ง');
+    })
+    .finally(() => {
+      if (overlay) { overlay.style.display = 'none'; }
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '✅ ยืนยันส่งคำขอ'; }
+    });
+  };
+
+  if (selectedFile) {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const base64 = ev.target.result.split(',')[1];
+      doSend(base64, selectedFile.name);
+    };
+    reader.readAsDataURL(selectedFile);
+  } else {
+    doSend(null, null);
+  }
+}
+
+function resetForm() {
+  selectedType=0; selectedFile=null;
+  const pdfInput = document.getElementById('pdf-input');
+  if (pdfInput) pdfInput.value = '';
+  ['country-select','fname','ftitle','lname','contact'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  _watOptions = [];
+  const wi = document.getElementById('wat-input');
+  wi.value = ''; wi.placeholder = '— เลือกประเทศก่อน —'; wi.disabled = true;
+  document.getElementById('wat-select').value = '';
+  document.getElementById('wat-dropdown').classList.remove('show');
+  document.getElementById('file-label').textContent='รองรับ PDF ขนาดไม่เกิน 10MB';
+  document.getElementById('file-area').style.borderColor='';
+  document.getElementById('zone-banner').classList.remove('show');
+  [1,2,3].forEach(i=>document.getElementById('type-'+i).classList.remove('selected'));
+  updateSummary();
+}
+
+function closeModal(){ document.getElementById('success-modal').classList.remove('open'); }
+function markRead(ref){
+  const r = requests.find(x => x.ref === ref);
+  if(!r) return;
+  r.isNew = false;
+  const idx = requests.indexOf(r);
+  const tr = document.querySelector(`tr[data-idx="${idx}"]`);
+  if(tr) tr.classList.remove('row-new');
+}
+function goCheckStatus(){
+  closeModal();
+  document.getElementById('search-input').value = lastSubmittedName;
+  filterTable();
+  showPage('status', document.querySelectorAll('.nav-btn')[1]);
+}
+function closeDupModal(){ document.getElementById('dup-modal').classList.remove('open'); }
+function proceedAfterDup(){
+  closeDupModal();
+  document.getElementById('preview-modal').classList.add('open');
+}
+
+// STATUS
+// ── zone tabs ────────────────────────────────────────────
+function setZone(val, btn) {
+  document.getElementById('filter-zone').value = val;
+  document.querySelectorAll('.zone-tab').forEach(t => t.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  filterTable();
+}
+
+// ── stepper ───────────────────────────────────────────────
+function buildStepper(status) {
+  const steps = [
+    { key: 'recv',  label: 'รับเรื่อง' },
+    { key: 'sent',  label: 'ส่งสำนัก' },
+    { key: 'done',  label: 'ได้มติ' },
+  ];
+  // map status → which steps are done/active
+  let doneCount = 0;
+  if (status === 'waiting' || status === 'incomplete') doneCount = 1;
+  else if (status === 'sent') doneCount = 2;
+  else if (status === 'approved') doneCount = 3;
+  else if (status === 'cancelled') doneCount = 0;
+
+  return `<div class="stepper">` + steps.map((s, i) => {
+    const isDone = i < doneCount;
+    const isActive = i === doneCount && status !== 'cancelled';
+    const cls = isDone ? 'done' : isActive ? 'active' : '';
+    const line = i < steps.length - 1
+      ? `<div class="step-line${isDone ? ' done' : ''}"></div>`
+      : '';
+    return `<div class="step ${cls}"><div class="dot"></div>${s.label}</div>${line}`;
+  }).join('') + `</div>`;
+}
+
+// ── helpers ──────────────────────────────────────────────
+let sortState = { col: null, dir: 1 };
+
+function hl(text, q) {
+  if (!q || !text) return text || '';
+  return String(text).replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'gi'),
+    m => `<mark class="hl">${m}</mark>`);
+}
+
+function sortBy(col) {
+  if (sortState.col === col) { sortState.dir *= -1; }
+  else { sortState.col = col; sortState.dir = 1; }
+  document.querySelectorAll('#page-status th.sortable').forEach(th => {
+    th.classList.remove('asc','desc');
+    th.querySelector('.sort-icon').textContent = '⇅';
+  });
+  const th = document.getElementById('th-' + col);
+  if (th) {
+    const cls = sortState.dir === 1 ? 'asc' : 'desc';
+    th.classList.add(cls);
+    th.querySelector('.sort-icon').textContent = sortState.dir === 1 ? '↑' : '↓';
+  }
+  filterTable();
+}
+
+const NEW_DAYS = 3;
+function isNewReq(r){ return r.dateMs && (Date.now() - r.dateMs) < NEW_DAYS * 86400000; }
+
+function renderStatsBar() {
+  const bar = document.getElementById('stats-bar');
+  if (!bar) return;
+  const counts = { waiting:0, sent:0, sent_stdp:0, approved:0, incomplete:0, cancelled:0 };
+  requests.forEach(r => { if (counts[r.status] !== undefined) counts[r.status]++; });
+  const newCount = requests.filter(isNewReq).length;
+  const chips = [
+    { key:'',          cls:'chip-all',       icon:'📋', label:'ทั้งหมด',        count: requests.length },
+    ...(isAdmin && newCount > 0 ? [{ key:'new', cls:'chip-new', icon:'🆕', label:'ใหม่', count: newCount }] : []),
+    { key:'waiting',   cls:'chip-waiting',   icon:'🟡', label:'รอ',             count: counts.waiting },
+    { key:'sent',      cls:'chip-sent',       icon:'🔵', label:'ส่งสำนักกำกับฯแล้ว', count: counts.sent },
+    { key:'sent_stdp', cls:'chip-sent-stdp',  icon:'🟣', label:'ส่งสำนัก ศ.ต.ภ. แล้ว',   count: counts.sent_stdp },
+    { key:'approved',  cls:'chip-approved',   icon:'🟢', label:'ได้รับมติแล้ว',       count: counts.approved },
+    { key:'incomplete',cls:'chip-incomplete', icon:'🔴', label:'ไม่ครบ',         count: counts.incomplete },
+    { key:'cancelled', cls:'chip-cancelled',  icon:'⚫', label:'ยกเลิก',         count: counts.cancelled },
+  ].filter(c => c.key === '' || c.key === 'new' || c.count > 0);
+  bar.innerHTML = chips.map(c => `
+    <button class="stat-chip ${c.cls}" onclick="setStatFilter('${c.key}')">
+      <span>${c.icon}</span><span>${c.label}</span><span class="chip-count">${c.count}</span>
+    </button>`).join('');
+  updateStatsActive();
+}
+
+let _newFilter = false;
+function setStatFilter(val) {
+  _newFilter = val === 'new';
+  document.getElementById('filter-status').value = _newFilter ? '' : val;
+  filterTable();
+}
+
+function updateStatsActive() {
+  const cur = _newFilter ? 'new' : document.getElementById('filter-status').value;
+  document.querySelectorAll('.stat-chip').forEach(chip => {
+    const key = chip.getAttribute('onclick').match(/'([^']*)'/)[1];
+    chip.classList.toggle('active', key === cur);
+  });
+}
+
+// ── render ────────────────────────────────────────────────
+const isMobile = () => window.innerWidth <= 640;
+
+function renderStatusTable(filtered){
+  const q = (document.getElementById('search-input').value || '').toLowerCase().trim();
+  let data = filtered !== undefined ? filtered : requests;
+
+  // sort
+  if (sortState.col) {
+    data = [...data].sort((a,b) => {
+      const av = String(a[sortState.col]||''), bv = String(b[sortState.col]||'');
+      return av.localeCompare(bv, 'th') * sortState.dir;
+    });
+  }
+
+  const tbody=document.getElementById('status-tbody');
+  const cardList=document.getElementById('card-list');
+  const mobile = isMobile();
+  const noResult=document.getElementById('no-result');
+  const countEl=document.getElementById('result-count');
+  if(countEl){
+    if(requests.length) countEl.textContent = (filtered !== undefined) ? `พบ ${data.length} รายการ (ทั้งหมด ${requests.length} รายการ)` : `ทั้งหมด ${requests.length} รายการ`;
+    else countEl.textContent='';
+  }
+  if(!data.length){
+    tbody.innerHTML=''; cardList.innerHTML='';
+    noResult.style.display='block'; return;
+  }
+  noResult.style.display='none';
+
+  // TABLE (desktop only) — chunked to avoid UI freeze
+  if(mobile){ tbody.innerHTML=''; }
+  else {
+    const CHUNK = 60;
+    const buildRow = (r,idx)=>{
+    const s=STATUS_CONFIG[r.status];
+    const ri = JSON.stringify(r).replace(/'/g,"&#39;");
+    const globalIdx = r._idx;
+    const statusCell = isAdmin
+      ? `<td style="text-align:center" onclick="event.stopPropagation()">
+          <div style="display:flex;align-items:center;gap:6px;justify-content:center">
+            <select class="edit-select" id="tbl-status-${globalIdx}" data-status-select="${globalIdx}" onchange="colorSelect(this);tblMarkDirty(${globalIdx})" style="border-radius:8px;padding:4px 6px;font-size:0.8rem;border:1.5px solid #e5e7eb;cursor:pointer;font-weight:600;background:${(STATUS_COLORS[r.status]||{bg:'#f1f5f9'}).bg};color:${(STATUS_COLORS[r.status]||{color:'#374151'}).color}">
+              ${Object.entries(STATUS_CONFIG).map(([k,v])=>`<option value="${k}" ${r.status===k?'selected':''} style="background:${(STATUS_COLORS[k]||{bg:'#f1f5f9'}).bg};color:${(STATUS_COLORS[k]||{color:'#374151'}).color};font-weight:600">${v.label}</option>`).join('')}
+            </select>
+          </div>
+          ${(r.status === 'sent' || r.status === 'sent_stdp') ? `<input id="tbl-date-${globalIdx}" value="${extractStatusDate(r.statusText)||''}" placeholder="DD.MM.YY" oninput="tblMarkDirty(${globalIdx})" style="margin-top:4px;width:90px;padding:3px 6px;border:1.5px solid #e5e7eb;border-radius:6px;font-size:0.75rem;font-family:monospace;text-align:center;color:#6b7280">` : ''}
+        </td>`
+      : `<td style="text-align:center"><span class="badge ${s.cls}">${s.label}${extractStatusDate(r.statusText) ? `<span style="font-weight:400;opacity:0.75;margin-left:5px">${extractStatusDate(r.statusText)}</span>` : ''}</span></td>`;
+
+    const isNewRow = isAdmin && r.isNew;
+    const trClick = isAdmin ? `onclick="markRead('${r.ref}')"` : `onclick='openDetail(${ri})'`;
+    return `<tr class="${isAdmin?'':'clickable'}${isNewRow?' row-new':''}" data-idx="${requests.indexOf(r)}" ${trClick}>
+      <td style="font-size:0.82rem;color:var(--text-muted);text-align:center;display:${isAdmin?'':'none'}">${r.date ? r.date.replace(/\s+(\d{2}:\d{2}:\d{2})/, '<br>$1') : '—'}</td>
+      <td style="font-size:0.82rem">${COUNTRY_NAMES[r.country]||r.country}</td>
+      <td style="font-size:0.82rem">${hl(r.wat,q)}</td>
+      <td style="font-weight:600">${hl(r.name,q)}${isAdmin&&isNewReq(r)?' <span class="new-badge">ใหม่</span>':''}${isAdmin?` <button onclick="event.stopPropagation();openEditWatModal(${globalIdx})" style="margin-left:4px;padding:1px 6px;border-radius:6px;border:1px solid #e5e7eb;background:#f8fafc;color:#6b7280;font-size:0.7rem;cursor:pointer">✏️</button>`:''}</td>
+      <td style="font-size:0.82rem;white-space:nowrap">${r.type}</td>
+      ${statusCell}
+      <td style="font-size:0.82rem;color:var(--text-muted)">${isAdmin
+        ? `<input id="tbl-note-${globalIdx}" value="${r.note||''}" placeholder="หมายเหตุ..." oninput="tblMarkDirty(${globalIdx})" style="width:100%;padding:4px 7px;border:1.5px solid #e5e7eb;border-radius:6px;font-size:0.8rem;font-family:inherit;color:var(--text)">`
+        : r.note||''}</td>
+      <td style="text-align:center" onclick="event.stopPropagation()">${isAdmin
+        ? `<button onclick="openMotiModal(${globalIdx})" style="display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:99px;background:${r.motiLink?'#dbeafe':'#f1f5f9'};color:${r.motiLink?'#1d4ed8':'#9ca3af'};font-size:0.75rem;font-weight:600;border:none;cursor:pointer;white-space:nowrap">${r.motiLink?'📎 ดูมติ':'+ ใส่มติ'}</button>`
+        : (()=>{ const u=safeUrl(r.motiLink); return u ? `<a href="${u}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:99px;background:#dbeafe;color:#1d4ed8;font-size:0.75rem;font-weight:600;text-decoration:none;white-space:nowrap">📎 ดูมติ</a>` : '<span style="color:#d1d5db">—</span>'; })()
+      }</td>
+      <td style="text-align:center;display:${isAdmin?'':'none'};width:36px;max-width:36px">${r.contact ? `<div style="position:relative;display:inline-block" class="contact-tip-wrap"><span onclick="event.stopPropagation();navigator.clipboard.writeText('${r.contact}').then(()=>{const t=this.nextElementSibling;t.textContent='✅ คัดลอกแล้ว!';t.style.background='#16a34a';setTimeout(()=>{t.textContent='${r.contact}';t.style.background='';},1500)})" style="cursor:pointer;font-size:1rem;opacity:0.5">📋</span><div class="contact-tip">${r.contact}</div></div>` : '<span style="color:#d1d5db">—</span>'}</td>
+      <td style="text-align:center;display:${isAdmin?'':'none'}" onclick="event.stopPropagation()">${(()=>{ const u=safeUrl(r.pdfLink); return u ? `<a href="${u}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:99px;background:#fee2e2;color:#b91c1c;font-size:0.75rem;font-weight:600;text-decoration:none;white-space:nowrap">📎 PDF</a>` : '<span style="color:#d1d5db">—</span>'; })()}</td>
+      <td style="text-align:center;display:${isAdmin?'':'none'}" onclick="event.stopPropagation()">
+        <div style="display:flex;flex-direction:column;gap:4px;margin-top:4px;align-items:center">
+          <button id="tbl-save-${globalIdx}" onclick="tblSave(${globalIdx})" style="display:none;width:72px;padding:4px 0;border-radius:8px;background:#16a34a;color:white;border:none;font-size:0.8rem;font-weight:600;cursor:pointer;font-family:inherit">Save</button>
+          <button id="tbl-cancel-${globalIdx}" onclick="tblCancel(${globalIdx})" style="display:none;width:72px;padding:4px 0;border-radius:8px;background:none;color:#dc2626;border:1.5px solid #fca5a5;font-size:0.8rem;font-weight:600;cursor:pointer;font-family:inherit">Cancel</button>
+          <div style="position:relative;display:inline-block">
+            <button onclick="event.stopPropagation();toggleRowMenu(${globalIdx},this)" style="width:28px;height:28px;border-radius:6px;background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">⋮</button>
+            <div id="row-menu-${globalIdx}" style="display:none;position:absolute;right:0;top:32px;background:white;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,0.12);z-index:200;min-width:140px;overflow:hidden">
+              <button onclick="event.stopPropagation();closeAllRowMenus();openDeleteModal(${globalIdx})" style="width:100%;padding:8px 14px;background:none;border:none;text-align:left;font-size:0.85rem;font-family:inherit;cursor:pointer;color:#dc2626">🗑️ ลบรายการ</button>
+            </div>
+          </div>
+        </div>
+      </td>
+    </tr>`;
+    };
+    tbody.innerHTML = data.slice(0, CHUNK).map(buildRow).join('');
+    if(data.length > CHUNK){
+      let offset = CHUNK;
+      const renderNext = () => {
+        if(offset >= data.length) return;
+        tbody.insertAdjacentHTML('beforeend', data.slice(offset, offset+CHUNK).map(buildRow).join(''));
+        offset += CHUNK;
+        if(offset < data.length) requestAnimationFrame(renderNext);
+      };
+      requestAnimationFrame(renderNext);
+    }
+  }
+
+  // CARD (mobile only)
+  if(!mobile){ cardList.innerHTML=''; return; }
+  cardList.innerHTML=data.map((r)=>{
+    const i = r._idx;
+    const s=STATUS_CONFIG[r.status];
+    const adminSection = isAdmin ? `
+      <div class="sc-admin-actions" onclick="event.stopPropagation()">
+        <select id="sc-status-${i}" onchange="colorSelect(this);scMarkDirty(${i})" style="font-weight:600;background:${(STATUS_COLORS[r.status]||{bg:'#f1f5f9'}).bg};color:${(STATUS_COLORS[r.status]||{color:'#374151'}).color}">
+          ${Object.entries(STATUS_CONFIG).map(([k,v])=>`<option value="${k}" ${r.status===k?'selected':''} style="background:${(STATUS_COLORS[k]||{bg:'#f1f5f9'}).bg};color:${(STATUS_COLORS[k]||{color:'#374151'}).color};font-weight:600">${v.label}</option>`).join('')}
+        </select>
+        <button onclick="openMotiModal(${i})" style="flex-shrink:0;display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:99px;background:${r.motiLink?'#dbeafe':'#f1f5f9'};color:${r.motiLink?'#1d4ed8':'#9ca3af'};font-size:0.75rem;font-weight:600;border:none;cursor:pointer;white-space:nowrap">${r.motiLink?'📎 ดูมติ':'+ ใส่มติ'}</button>
+        <input id="sc-note-${i}" value="${r.note||''}" placeholder="หมายเหตุ..." oninput="scMarkDirty(${i})">
+        <button id="sc-save-${i}" onclick="scSaveRow(${i})" style="display:none;flex:1;padding:5px 0;border-radius:8px;background:#16a34a;color:white;border:none;font-size:0.85rem;font-weight:600;cursor:pointer;font-family:inherit">Save</button>
+        <button id="sc-cancel-${i}" onclick="scCancelRow(${i})" style="display:none;flex:1;padding:5px 0;border-radius:8px;background:none;color:#dc2626;border:1.5px solid #fca5a5;font-size:0.85rem;font-weight:600;cursor:pointer;font-family:inherit">Cancel</button>
+      </div>` : '';
+    const rj = JSON.stringify(r).replace(/'/g,"&#39;");
+    return `<div class="status-card ${r.status}" onclick='openDetail(${rj})' style="cursor:pointer">
+      <div class="sc-top">
+        <span class="zone-badge">เขต ${r.zone}</span>
+        ${isAdmin&&isNewReq(r)?'<span class="new-badge">ใหม่</span>':''}
+      </div>
+      <div class="sc-name">${hl(r.name,q)}</div>
+      <div class="sc-sub">${hl(r.wat,q)} • ${COUNTRY_NAMES[r.country]||r.country}</div>
+      <div class="sc-type">📋 ${r.type}</div>
+      <div class="sc-footer">
+        <span class="badge ${s.cls}" style="white-space:nowrap">${s.label}${extractStatusDate(r.statusText) ? `<span style="font-weight:400;opacity:0.75;margin-left:5px">${extractStatusDate(r.statusText)}</span>` : ''}</span>
+        <span class="sc-note">${r.note||''}</span>
+      </div>
+      ${buildStepper(r.status)}
+      ${adminSection}
+    </div>`;
+  }).join('');
+}
+
+// ── detail modal ─────────────────────────────────────────
+function openDetail(r) {
+  const s = STATUS_CONFIG[r.status];
+  const isStdp = r.type && r.type.includes('ศตภ');
+  const midLabel = isStdp ? 'ส่งสำนัก ศ.ต.ภ.' : 'ส่งสำนักกำกับฯ';
+  const midStatus = isStdp ? 'sent_stdp' : 'sent';
+  const steps = [
+    { label: 'รับเรื่อง', done: true, active: false },
+    { label: midLabel,
+      done: [midStatus, 'approved'].includes(r.status),
+      active: r.status === 'waiting' || r.status === 'incomplete' },
+    ...(!isStdp ? [{ label: 'ได้มติ',
+      done: r.status === 'approved',
+      active: r.status === midStatus }] : []),
+  ];
+  const timeline = `<div class="md-timeline">` + steps.map((st, i) => {
+    const cls = st.done ? 'done' : st.active ? 'active' : '';
+    const line = i < steps.length - 1
+      ? `<div class="md-step-line${st.done ? ' done' : ''}"></div>` : '';
+    return `<div class="md-step">
+      <div class="md-step-dot ${cls}">${st.done ? '✓' : st.active ? '●' : ''}</div>
+      <div class="md-step-label ${cls}">${st.label}</div>
+    </div>${line}`;
+  }).join('') + `</div>`;
+
+  document.getElementById('detail-content').innerHTML = `
+    <div class="md-header">
+      <div>
+        <div class="md-name">${r.name}</div>
+        <div class="md-sub">${r.wat} • ${COUNTRY_NAMES[r.country]||r.country} • เขต ${r.zone}</div>
+      </div>
+      <button class="md-close" onclick="closeDetail()">✕</button>
+    </div>
+    <div class="md-divider"></div>
+    <div class="md-grid">
+      <div><div class="md-label">ประเภทคำขอ</div><div class="md-value">${r.type||'—'}</div></div>
+      <div><div class="md-label">วันที่ยื่น</div><div class="md-value">${r.date||'—'}</div></div>
+      <div><div class="md-label">สถานะ</div><div class="md-value"><span class="badge ${s.cls}">${s.label}</span></div></div>
+      <div><div class="md-label">หมายเหตุ</div><div class="md-value">${r.note||'—'}</div></div>
+    </div>
+    <div class="md-divider"></div>
+    <div class="md-section">
+      <div class="md-label" style="margin-bottom:0.6rem">ความคืบหน้า</div>
+      ${timeline}
+    </div>
+    ${(r.motiLink || r.pdfLink) ? `
+    <div class="md-divider"></div>
+    <div style="display:flex;gap:0.65rem;margin-top:0.25rem">
+      ${(()=>{ const u=safeUrl(r.motiLink); return u ? `<a href="${u}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:0.4rem 1rem;border-radius:99px;background:#dbeafe;color:#1d4ed8;font-size:0.83rem;font-weight:600;text-decoration:none;font-family:inherit">📄 ดูมติ</a>` : ''; })()}
+      ${(()=>{ const u=safeUrl(r.pdfLink); return (u && isAdmin) ? `<a href="${u}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:0.4rem 1rem;border-radius:99px;background:#fee2e2;color:#b91c1c;font-size:0.83rem;font-weight:600;text-decoration:none;font-family:inherit">📎 ดู PDF</a>` : ''; })()}
+    </div>` : ''}
+  `;
+  document.getElementById('detail-modal').classList.add('open');
+}
+function closeDetail() {
+  document.getElementById('detail-modal').classList.remove('open');
+}
+
+function scMarkDirty(i){
+  document.getElementById('sc-save-'+i).style.display='';
+  document.getElementById('sc-cancel-'+i).style.display='';
+}
+function scCancelRow(i){
+  const r = requests.find(x => x._idx === i);
+  if(!r) return;
+  document.getElementById('sc-status-'+i).value = r.status;
+  document.getElementById('sc-note-'+i).value = r.note||'';
+  document.getElementById('sc-save-'+i).style.display='none';
+  document.getElementById('sc-cancel-'+i).style.display='none';
+}
+let editWatIdx = -1;
+function openEditWatModal(i) {
+  editWatIdx = i;
+  const r = requests[i];
+  const sel = document.getElementById('edit-country-input');
+  const groups = [
+    {label:'เขต 1 — ยุโรปตะวันตก', keys:['france','netherlands','belgium','luxembourg']},
+    {label:'เขต 2 — ยุโรปกลาง',     keys:['germany','estonia']},
+    {label:'เขต 3 — สแกนดิเนเวีย',  keys:['sweden','norway','denmark','finland','iceland']},
+    {label:'เขต 4 — ยุโรปใต้และตะวันออก', keys:['switzerland','austria','italy','greece','czech','hungary','malta']},
+  ];
+  sel.innerHTML = groups.map(g =>
+    `<optgroup label="${g.label}">${g.keys.map(k=>`<option value="${k}">${COUNTRY_NAMES[k]||k}</option>`).join('')}</optgroup>`
+  ).join('');
+  sel.value = COUNTRY_MAP[r.country] || r.country || '';
+  document.getElementById('edit-wat-input').value = r.wat || '';
+  document.getElementById('edit-name-input').value = r.name || '';
+  document.getElementById('edit-wat-modal').classList.add('open');
+}
+function closeEditWatModal() {
+  document.getElementById('edit-wat-modal').classList.remove('open');
+}
+function saveEditWat() {
+  if (editWatIdx < 0) return;
+  const i = editWatIdx;
+  requests[i].country = document.getElementById('edit-country-input').value;
+  requests[i].wat = document.getElementById('edit-wat-input').value.trim();
+  requests[i].name = document.getElementById('edit-name-input').value.trim();
+  requests[i].zone = ZONES[requests[i].country] || requests[i].zone;
+  postToSheets(i);
+  closeEditWatModal();
+  // อัปเดต desktop table
+  const tr = document.querySelector(`tr[data-idx="${i}"]`);
+  if (tr) {
+    const tds = tr.querySelectorAll('td');
+    tds[1].textContent = COUNTRY_NAMES[requests[i].country] || requests[i].country;
+    tds[2].textContent = requests[i].wat;
+    const nameTd = tds[3];
+    nameTd.innerHTML = `<b>${requests[i].name}</b> <button onclick="event.stopPropagation();openEditWatModal(${i})" style="margin-left:4px;padding:1px 6px;border-radius:6px;border:1px solid #e5e7eb;background:#f8fafc;color:#6b7280;font-size:0.7rem;cursor:pointer">✏️</button>`;
+  }
+  // อัปเดต mobile card
+  const card = document.querySelector(`#card-list .status-card:nth-child(${requests.findIndex(x=>x._idx===i)+1})`);
+  if (card) {
+    const r = requests[i];
+    const nameEl = card.querySelector('.sc-name');
+    const subEl  = card.querySelector('.sc-sub');
+    if (nameEl) nameEl.textContent = r.name;
+    if (subEl)  subEl.textContent  = `${r.wat} • ${COUNTRY_NAMES[r.country]||r.country}`;
+    const zoneBadge = card.querySelector('.zone-badge');
+    if (zoneBadge) zoneBadge.textContent = `เขต ${r.zone}`;
+  }
+}
+
+let motiEditIdx = -1;
+function openMotiModal(i) {
+  motiEditIdx = i;
+  requests[i]._prevMotiLink = requests[i].motiLink || '';
+  requests[i]._prevStatus   = requests[i].status;
+  document.getElementById('moti-url-input').value = requests[i].motiLink || '';
+  document.getElementById('moti-modal').classList.add('open');
+}
+function openDocGuide(url) {
+  document.getElementById('docguide-link').href = url;
+  document.getElementById('docguide-modal').classList.add('open');
+}
+function closeDocGuide() {
+  document.getElementById('docguide-modal').classList.remove('open');
+}
+function closeMotiModal() {
+  document.getElementById('moti-modal').classList.remove('open');
+}
+function saveMotiUrl() {
+  if (motiEditIdx < 0) return;
+  const i = motiEditIdx;
+  requests[i].motiLink = document.getElementById('moti-url-input').value.trim();
+  const link = requests[i].motiLink;
+  if (link && link.includes('http')) {
+    requests[i].status = 'approved';
+    requests[i].statusText = '';
+    const sel = document.querySelector(`[data-status-select="${i}"]`);
+    if (sel) { sel.value = 'approved'; colorSelect(sel); }
+    tblMarkDirty(i);
+  }
+  postToSheets(i);
+  closeMotiModal();
+  const tblBtn = document.querySelector(`button[onclick="openMotiModal(${i})"]`);
+  if(tblBtn){
+    tblBtn.style.background = link ? '#dbeafe' : '#f1f5f9';
+    tblBtn.style.color = link ? '#1d4ed8' : '#9ca3af';
+    tblBtn.textContent = link ? '📎 ดูมติ' : '+ ใส่มติ';
+  }
+}
+function tblCancel(i) {
+  if (requests[i]._prevStatus !== undefined) {
+    requests[i].status    = requests[i]._prevStatus;
+    requests[i].motiLink  = requests[i]._prevMotiLink;
+    delete requests[i]._prevStatus;
+    delete requests[i]._prevMotiLink;
+  }
+  const statusEl = document.getElementById('tbl-status-'+i);
+  const noteEl = document.getElementById('tbl-note-'+i);
+  const dateEl = document.getElementById('tbl-date-'+i);
+  const saveBtn = document.getElementById('tbl-save-'+i);
+  const cancelBtn = document.getElementById('tbl-cancel-'+i);
+  if (statusEl) { statusEl.value = requests[i].status; colorSelect(statusEl); }
+  if (noteEl) noteEl.value = requests[i].note || '';
+  if (dateEl) dateEl.value = extractStatusDate(requests[i].statusText) || '';
+  if (saveBtn) saveBtn.style.display = 'none';
+  if (cancelBtn) cancelBtn.style.display = 'none';
+  const tblBtn = document.querySelector(`button[onclick="openMotiModal(${i})"]`);
+  if (tblBtn) {
+    const lnk = requests[i].motiLink;
+    tblBtn.style.background = lnk ? '#dbeafe' : '#f1f5f9';
+    tblBtn.style.color = lnk ? '#1d4ed8' : '#9ca3af';
+    tblBtn.textContent = lnk ? '📎 ดูมติ' : '+ ใส่มติ';
+  }
+}
+const STATUS_COLORS = {
+  waiting:   { bg:'#fef3c7', color:'#92400e' },
+  sent:      { bg:'#dbeafe', color:'#1d4ed8' },
+  sent_stdp: { bg:'#ede9fe', color:'#6d28d9' },
+  approved:  { bg:'#dcfce7', color:'#15803d' },
+  incomplete:{ bg:'#fee2e2', color:'#b91c1c' },
+  cancelled: { bg:'#f3f4f6', color:'#4b5563' },
+};
+function colorSelect(el) {
+  const c = STATUS_COLORS[el.value] || { bg:'#f1f5f9', color:'#374151' };
+  el.style.background = c.bg;
+  el.style.color = c.color;
+  el.style.fontWeight = '600';
+}
+function toggleRowMenu(i, btn) {
+  closeAllRowMenus();
+  const menu = document.getElementById('row-menu-'+i);
+  if (!menu) return;
+  const rect = btn.getBoundingClientRect();
+  menu.style.position = 'fixed';
+  menu.style.top = (rect.bottom + 4) + 'px';
+  menu.style.right = (window.innerWidth - rect.right) + 'px';
+  menu.style.left = 'auto';
+  menu.style.display = 'block';
+}
+function closeAllRowMenus() {
+  document.querySelectorAll('[id^="row-menu-"]').forEach(m => m.style.display = 'none');
+}
+document.addEventListener('click', closeAllRowMenus);
+
+let deleteIdx = -1;
+function openDeleteModal(i) {
+  deleteIdx = i;
+  document.getElementById('delete-modal-name').textContent = requests[i].name + ' — ' + requests[i].wat;
+  document.getElementById('delete-modal').classList.add('open');
+}
+function closeDeleteModal() {
+  document.getElementById('delete-modal').classList.remove('open');
+  deleteIdx = -1;
+}
+function confirmDelete() {
+  if (deleteIdx < 0) return;
+  const i = deleteIdx;
+  const r = requests[i];
+  closeDeleteModal();
+  if (r._sheetName && r._sheetRow) {
+    fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'deleteRow', sheetName: r._sheetName, rowNum: r._sheetRow }),
+      redirect: 'follow',
+    }).then(() => loadData()).catch(err => { console.warn('deleteRow error:', err); loadData(); });
+  } else {
+    requests.splice(i, 1);
+    requests.forEach((x, idx) => x._idx = idx);
+    filterTable();
+  }
+}
+function statusToSheetText(r) {
+  if (r.status === 'sent') return ('ส่งสำนักกำกับฯแล้ว ' + (r.statusText || '')).trim();
+  if (r.status === 'sent_stdp') return ('ส่งสำนัก ศ.ต.ภ. แล้ว ' + (r.statusText || '')).trim();
+  if (r.status === 'incomplete') return 'เอกสารไม่ครบ';
+  if (r.status === 'cancelled') return 'ยกเลิก';
+  if (r.status === 'approved') return 'ได้รับมติแล้ว';
+  return 'รอดำเนินการ';
+}
+function postToSheets(i) {
+  const r = requests[i];
+  if (!r._sheetName || !r._sheetRow) return;
+  const payload = {
+    action: 'updateStatus',
+    sheetName: r._sheetName,
+    rowNum: r._sheetRow,
+    country: r.country || '',
+    wat: r.wat || '',
+    name: r.name || '',
+    status: statusToSheetText(r),
+    note: r.note || '',
+    moti: r.motiLink || '',
+  };
+  fetch(SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify(payload),
+    redirect: 'follow',
+  }).then(r => r.json()).then(res => {
+    if (res.status !== 'ok') alert('บันทึกไม่สำเร็จ: ' + (res.message || 'ไม่ทราบสาเหตุ'));
+  }).catch(err => { console.warn('postToSheets error:', err); alert('บันทึกไม่สำเร็จ: ' + err.message); });
+}
+function tblMarkDirty(i) {
+  const btn = document.getElementById('tbl-save-'+i);
+  if (btn) btn.style.display = '';
+  const cancel = document.getElementById('tbl-cancel-'+i);
+  if (cancel) cancel.style.display = '';
+  const val = document.getElementById('tbl-status-'+i) ? document.getElementById('tbl-status-'+i).value : '';
+  const dateInput = document.getElementById('tbl-date-'+i);
+  if (dateInput && (val === 'sent' || val === 'sent_stdp')) {
+    const now = new Date();
+    const dd = String(now.getDate()).padStart(2,'0');
+    const mm = String(now.getMonth()+1).padStart(2,'0');
+    const yy = String(now.getFullYear()+543).slice(-2);
+    dateInput.value = `${dd}.${mm}.${yy}`;
+  }
+}
+function tblSave(i) {
+  const val = document.getElementById('tbl-status-'+i).value;
+  requests[i].status = val;
+  if (val === 'sent' || val === 'sent_stdp') {
+    const dateInput = document.getElementById('tbl-date-'+i);
+    if (dateInput && dateInput.value.trim()) {
+      requests[i].statusText = dateInput.value.trim();
+    } else {
+      const now = new Date();
+      const dd = String(now.getDate()).padStart(2,'0');
+      const mm = String(now.getMonth()+1).padStart(2,'0');
+      const yy = String(now.getFullYear()+543).slice(-2);
+      requests[i].statusText = `${dd}.${mm}.${yy}`;
+    }
+  } else {
+    requests[i].statusText = '';
+  }
+  requests[i].note = document.getElementById('tbl-note-'+i).value;
+  postToSheets(i);
+  const btn = document.getElementById('tbl-save-'+i);
+  const cancelBtn = document.getElementById('tbl-cancel-'+i);
+  if (btn) {
+    btn.textContent = '✓';
+    btn.style.background = '#15803d';
+    btn.style.transition = 'opacity 0.6s';
+    if (cancelBtn) { cancelBtn.style.transition = 'opacity 0.6s'; }
+    setTimeout(() => {
+      btn.style.opacity = '0';
+      if (cancelBtn) cancelBtn.style.opacity = '0';
+    }, 600);
+    setTimeout(() => {
+      const r = requests[i];
+      const s = STATUS_CONFIG[r.status];
+      const sel = document.querySelector(`[data-status-select="${i}"]`);
+      if (sel) {
+        sel.value = r.status;
+        colorSelect(sel);
+      }
+      btn.style.opacity=''; btn.style.transition=''; btn.textContent='Save'; btn.style.background='#16a34a'; btn.style.display='none';
+      if(cancelBtn){ cancelBtn.style.opacity=''; cancelBtn.style.transition=''; cancelBtn.style.display='none'; }
+      const tr = btn?.closest('tr');
+      if(tr) tr.classList.remove('row-new');
+    }, 1300);
+  } else {
+    renderStatusTable();
+  }
+}
+function scSaveRow(i){
+  const val = document.getElementById('sc-status-'+i).value;
+  requests[i].status = val;
+  if(val==='sent'||val==='sent_stdp'){
+    const now=new Date();
+    const dd=String(now.getDate()).padStart(2,'0');
+    const mm=String(now.getMonth()+1).padStart(2,'0');
+    const yy=String(now.getFullYear()+543).slice(-2);
+    requests[i].statusText=`${dd}.${mm}.${yy}`;
+  } else { requests[i].statusText=''; }
+  requests[i].note=document.getElementById('sc-note-'+i).value;
+  postToSheets(i);
+  const btn=document.getElementById('sc-save-'+i);
+  const cancelBtn=document.getElementById('sc-cancel-'+i);
+  btn.textContent='✓'; btn.style.background='#15803d';
+  btn.style.transition='opacity 0.6s';
+  if(cancelBtn) cancelBtn.style.transition='opacity 0.6s';
+  setTimeout(()=>{ btn.style.opacity='0'; if(cancelBtn) cancelBtn.style.opacity='0'; },600);
+  // patch card in-place instead of full re-render
+  setTimeout(()=>{
+    const r = requests[i];
+    const s = STATUS_CONFIG[r.status];
+    const card = btn?.closest('.status-card');
+    if(card){
+      card.className = `status-card ${r.status}`;
+      const badge = card.querySelector('.sc-footer .badge');
+      if(badge) badge.innerHTML = s.label + (extractStatusDate(r.statusText)?`<span style="font-weight:400;opacity:0.75;margin-left:5px">${extractStatusDate(r.statusText)}</span>`:'');
+      const noteEl = card.querySelector('.sc-note');
+      if(noteEl) noteEl.textContent = r.note||'';
+      const stepper = card.querySelector('.stepper');
+      if(stepper) stepper.outerHTML = buildStepper(r.status);
+      btn.style.opacity=''; btn.style.transition=''; btn.textContent='Save'; btn.style.background='#16a34a'; btn.style.display='none';
+      if(cancelBtn){ cancelBtn.style.opacity=''; cancelBtn.style.transition=''; cancelBtn.style.display='none'; }
+    } else { renderStatusTable(); }
+  }, 1300);
+}
+
+function filterTable(){
+  if (isLoadingData) return;
+  const q=document.getElementById('search-input').value.toLowerCase();
+  const zone=document.getElementById('filter-zone').value;
+  const status=document.getElementById('filter-status').value;
+  const filtered = requests.filter(r=>{
+    const mQ=!q||(r.name||'').toLowerCase().includes(q)||(r.wat||'').toLowerCase().includes(q);
+    const mStatus = _newFilter ? isNewReq(r) : (!status||r.status===status);
+    return mQ&&(!zone||r.zone===zone)&&mStatus;
+  });
+  updateStatsActive();
+  renderStatusTable(filtered);
+}
+
+// ADMIN
+function showAdminLogin(){
+  if(isAdmin) return;
+  document.getElementById('admin-pass').value='';
+  document.getElementById('login-error').style.display='none';
+  document.getElementById('admin-login-modal').classList.add('open');
+}
+function closeAdminLogin(){
+  document.getElementById('admin-login-modal').classList.remove('open');
+}
+let _loginFailCount = 0;
+let _loginLockUntil = 0;
+let _loginLockTimer = null;
+function adminLogin(){
+  const now = Date.now();
+  if (now < _loginLockUntil) return;
+  const pass = document.getElementById('admin-pass').value;
+  sha256(pass).then(hash => {
+    if(hash === ADMIN_HASH){
+      _loginFailCount = 0;
+      _adminState.set(true);
+      document.getElementById('admin-dot').classList.add('live');
+      document.getElementById('signout-btn').style.display = '';
+      if (window.innerWidth <= 640) document.getElementById('admin-nav-btn').style.display = 'none';
+      else document.getElementById('admin-nav-btn').style.pointerEvents = 'none';
+      document.getElementById('th-date').style.display = '';
+      document.getElementById('th-contact').style.display = '';
+      document.getElementById('th-pdf').style.display = '';
+      document.getElementById('th-save').style.display = '';
+      closeAdminLogin();
+      renderStatsBar();
+      showPage('status', document.querySelector('.nav-btn[onclick*="status"]'));
+    } else {
+      _loginFailCount++;
+      const errEl = document.getElementById('login-error');
+      const btn = document.querySelector('#admin-login-modal .btn-primary');
+      if (_loginFailCount >= 3) {
+        _loginLockUntil = Date.now() + 30000;
+        _loginFailCount = 0;
+        let remaining = 30;
+        if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
+        errEl.textContent = `พิมพ์ผิดหลายครั้ง กรุณารอ ${remaining} วินาที`;
+        errEl.style.display = 'block';
+        clearInterval(_loginLockTimer);
+        _loginLockTimer = setInterval(() => {
+          remaining--;
+          if (remaining <= 0) {
+            clearInterval(_loginLockTimer);
+            if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+            errEl.style.display = 'none';
+          } else {
+            errEl.textContent = `พิมพ์ผิดหลายครั้ง กรุณารอ ${remaining} วินาที`;
+          }
+        }, 1000);
+      } else {
+        errEl.textContent = `รหัสผ่านไม่ถูกต้อง (${_loginFailCount}/3)`;
+        errEl.style.display = 'block';
+      }
+    }
+  });
+}
+function adminLogout(){
+  _adminState.set(false);
+  document.getElementById('admin-dot').classList.remove('live');
+  document.getElementById('signout-btn').style.display = 'none';
+  document.getElementById('admin-nav-btn').style.display = '';
+  document.getElementById('admin-nav-btn').style.pointerEvents = '';
+  document.getElementById('th-date').style.display = 'none';
+  document.getElementById('th-contact').style.display = 'none';
+  document.getElementById('th-pdf').style.display = 'none';
+  document.getElementById('th-save').style.display = 'none';
+  renderStatsBar();
+  filterTable();
+}
+
+loadFromSheets();
+
+// แก้ข้อความ "คลิก" → "แตะ" บนมือถือ
+if (window.matchMedia('(max-width:640px)').matches) {
+  const el = document.getElementById('file-upload-label');
+  if (el) el.textContent = 'แตะเพื่อเลือกไฟล์ PDF';
+}
+
+// lock body scroll เมื่อมี modal เปิดอยู่
+const _mo = new MutationObserver(() => {
+  document.body.style.overflow = document.querySelector('.modal-overlay.open') ? 'hidden' : '';
+});
+document.querySelectorAll('.modal-overlay').forEach(el => _mo.observe(el, { attributes: true, attributeFilter: ['class'] }));
+</script>
+</body>
+</html>
