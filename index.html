@@ -724,7 +724,7 @@
             <th style="text-align:left;min-width:90px;white-space:nowrap">ประเทศ</th>
             <th style="text-align:left;min-width:240px">วัด</th>
             <th style="text-align:left;min-width:220px">ชื่อ ฉายา นามสกุล</th>
-            <th style="text-align:left;min-width:220px">ขออนุมัติแบบ</th>
+            <th style="text-align:left;min-width:300px">ขออนุมัติแบบ</th>
             <th style="text-align:center;min-width:190px">สถานะดำเนินการ</th>
             <th style="text-align:center;min-width:130px">หมายเหตุ</th>
             <th style="min-width:100px;text-align:center;white-space:nowrap">มติ มส.</th>
@@ -1057,7 +1057,13 @@ function loadFromSheets() {
         const country = COUNTRY_MAP[countryRaw.trim()] || countryRaw.trim().toLowerCase().replace('ประเทศ','').trim() || 'other';
         const wat = getColVal(row, 'วัด');
         const name = getColVal(row, 'ชื่อ', 'ฉายา', 'นามสกุล');
-        const type = getColVal(row, 'ขออนุมัติ', 'ประเภท');
+        const typeRaw = getColVal(row, 'ขออนุมัติ', 'ประเภท');
+        const TYPE_LEGACY = {
+          'ขออนุมัติทำหนังสือเดินทางพระธรรมทูต (ทำเล่มใหม่)': 'ขออนุมัติทำเล่มใหม่ (พระธรรมทูต)',
+          'ขอต่ออายุหนังสือเดินทาง (เล่มราชการ)': 'ขอต่ออายุหนังสือเดินทาง (พระธรรมทูต)',
+          'ขอต่ออายุหนังสือเดินทาง ศตภ. (เล่มน้ำตาล)': 'ขอต่ออายุ ศตภ. (เล่มน้ำตาล)',
+        };
+        const type = TYPE_LEGACY[typeRaw] || typeRaw;
         const statusRaw = getColVal(row, 'สถานะ');
         const moti = getColVal(row, 'มติ');
         const note = getColVal(row, 'หมายเหตุ');
