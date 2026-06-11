@@ -956,6 +956,14 @@ const STATUS_CONFIG = {
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwQnL3euaHDV7rVK4w6z6OLmQNZ579cghV9rgiXL5RC3XZWGoFzawSfNKbCBVf-grQY/exec';
 
 // แปลงชื่อประเทศภาษาไทย → รหัส
+const COUNTRY_SUFFIXES = ['ฝรั่งเศส','เนเธอร์แลนด์','เบลเยียม','เบลเยี่ยม','ลักแซมบวร์ก','ลักเซมเบิร์ก','เยอรมนี','สหพันธ์สาธารณรัฐเยอรมนี','เอสโตเนีย','สวีเดน','นอร์เวย์','เดนมาร์ก','ฟินแลนด์','ไอซ์แลนด์','สวิตเซอร์แลนด์','สวิส','ออสเตรีย','อิตาลี','กรีซ','สาธารณรัฐเช็ก','เช็ก','ฮังการี','มอลต้า'];
+function trimWatName(wat) {
+  if (!wat) return wat;
+  for (const c of COUNTRY_SUFFIXES) {
+    if (wat.endsWith(' ' + c)) return wat.slice(0, -(c.length + 1)).trim();
+  }
+  return wat;
+}
 const COUNTRY_MAP = {
   'ฝรั่งเศส':'france','ประเทศฝรั่งเศส':'france','ฝรั่งเสศ':'france','ประเทศฝรั่งเสศ':'france',
   'เนเธอร์แลนด์':'netherlands','ประเทศเนเธอร์แลนด์':'netherlands',
@@ -1590,7 +1598,7 @@ function renderStatusTable(filtered){
     return `<tr class="${isAdmin?'':'clickable'}${isNewRow?' row-new':''}" data-idx="${requests.indexOf(r)}" ${trClick}>
       <td style="font-size:0.82rem;color:var(--text-muted);text-align:center;display:${isAdmin?'':'none'}">${r.date ? r.date.replace(/\s+(\d{2}:\d{2}:\d{2})/, '<br>$1') : '—'}</td>
       <td style="font-size:0.82rem">${COUNTRY_NAMES[r.country]||r.country}</td>
-      <td style="font-size:0.82rem">${hl(r.wat,q)}</td>
+      <td style="font-size:0.82rem">${hl(trimWatName(r.wat),q)}</td>
       <td style="font-weight:600">${hl(r.name,q)}${isAdmin&&isNewReq(r)?' <span class="new-badge">ใหม่</span>':''}${isAdmin?` <button onclick="event.stopPropagation();openEditWatModal(${globalIdx})" style="margin-left:4px;padding:1px 6px;border-radius:6px;border:1px solid #e5e7eb;background:#f8fafc;color:#6b7280;font-size:0.7rem;cursor:pointer">✏️</button>`:''}</td>
       <td style="font-size:0.82rem;white-space:nowrap">${r.type}</td>
       ${statusCell}
@@ -1652,7 +1660,7 @@ function renderStatusTable(filtered){
         ${isAdmin&&isNewReq(r)?'<span class="new-badge">ใหม่</span>':''}
       </div>
       <div class="sc-name">${hl(r.name,q)}</div>
-      <div class="sc-sub">${hl(r.wat,q)} • ${COUNTRY_NAMES[r.country]||r.country}</div>
+      <div class="sc-sub">${hl(trimWatName(r.wat),q)} • ${COUNTRY_NAMES[r.country]||r.country}</div>
       <div class="sc-type">📋 ${r.type}</div>
       <div class="sc-footer">
         <span class="badge ${s.cls}" style="white-space:nowrap">${s.label}${extractStatusDate(r.statusText) ? `<span style="font-weight:400;opacity:0.75;margin-left:5px">${extractStatusDate(r.statusText)}</span>` : ''}</span>
@@ -1693,7 +1701,7 @@ function openDetail(r) {
     <div class="md-header">
       <div>
         <div class="md-name">${r.name}</div>
-        <div class="md-sub">${r.wat} • ${COUNTRY_NAMES[r.country]||r.country} • เขต ${r.zone}</div>
+        <div class="md-sub">${trimWatName(r.wat)} • ${COUNTRY_NAMES[r.country]||r.country} • เขต ${r.zone}</div>
       </div>
       <button class="md-close" onclick="closeDetail()">✕</button>
     </div>
@@ -1770,7 +1778,7 @@ function saveEditWat() {
   if (tr) {
     const tds = tr.querySelectorAll('td');
     tds[1].textContent = COUNTRY_NAMES[requests[i].country] || requests[i].country;
-    tds[2].textContent = requests[i].wat;
+    tds[2].textContent = trimWatName(requests[i].wat);
     const nameTd = tds[3];
     nameTd.innerHTML = `<b>${requests[i].name}</b> <button onclick="event.stopPropagation();openEditWatModal(${i})" style="margin-left:4px;padding:1px 6px;border-radius:6px;border:1px solid #e5e7eb;background:#f8fafc;color:#6b7280;font-size:0.7rem;cursor:pointer">✏️</button>`;
   }
