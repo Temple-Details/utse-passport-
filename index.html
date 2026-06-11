@@ -937,7 +937,7 @@ const WATS = {
 };
 const ZONES = {france:'1',netherlands:'1',belgium:'1',luxembourg:'1',germany:'2',estonia:'2',sweden:'3',norway:'3',denmark:'3',finland:'3',iceland:'3',switzerland:'4',austria:'4',italy:'4',greece:'4',czech:'4',hungary:'4',malta:'4'};
 const COUNTRY_NAMES = {france:'ฝรั่งเศส',netherlands:'เนเธอร์แลนด์',belgium:'เบลเยียม',luxembourg:'ลักแซมบวร์ก',germany:'เยอรมนี',estonia:'เอสโตเนีย',sweden:'สวีเดน',norway:'นอร์เวย์',denmark:'เดนมาร์ก',finland:'ฟินแลนด์',iceland:'ไอซ์แลนด์',switzerland:'สวิตเซอร์แลนด์',austria:'ออสเตรีย',italy:'อิตาลี',greece:'กรีซ',czech:'เช็ก',hungary:'ฮังการี',malta:'มอลต้า'};
-const TYPE_NAMES = {1:'ขอต่ออายุหนังสือเดินทาง (พระธรรมทูต)',2:'ขออนุมัติทำเล่มใหม่ (พระธรรมทูต)',3:'ขอต่ออายุ ศตภ. (เล่มน้ำตาล)'};
+const TYPE_NAMES = {1:'ขออนุมัติทำเล่มใหม่ (พระธรรมทูต)',2:'ขอต่ออายุหนังสือเดินทาง (พระธรรมทูต)',3:'ขอต่ออายุ ศตภ. (เล่มน้ำตาล)'};
 const ZONE_INFO = {
   '1':{name:'เขต 1',countries:'เนเธอร์แลนด์ • เบลเยี่ยม • ฝรั่งเศส • ลักเซมเบิร์ก'},
   '2':{name:'เขต 2',countries:'สหพันธ์สาธารณรัฐเยอรมนี'},
@@ -1111,6 +1111,7 @@ function showPage(p, btn) {
   document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
   document.getElementById('page-' + p).classList.add('active');
   if(btn) btn.classList.add('active');
+  window.scrollTo(0, 0);
   if(p==='status') renderStatusTable();
   const bar = document.getElementById('sticky-submit-bar');
   if(bar) bar.style.display = p === 'form' ? '' : 'none';
@@ -1283,7 +1284,7 @@ function validate() {
     else { err.style.display='none'; el.classList.remove('error'); }
   });
   if(!selectedType){ document.getElementById('err-type').style.display='block'; ok=false; }
-  // if(!selectedFile){ document.getElementById('err-file').style.display='block'; ok=false; }
+  if(!selectedFile){ document.getElementById('err-file').style.display='block'; ok=false; }
   return ok;
 }
 
@@ -1910,7 +1911,7 @@ function confirmDelete() {
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({ action: 'deleteRow', sheetName: r._sheetName, rowNum: r._sheetRow }),
       redirect: 'follow',
-    }).then(() => loadData()).catch(err => { console.warn('deleteRow error:', err); loadData(); });
+    }).then(() => loadFromSheets()).catch(err => { console.warn('deleteRow error:', err); loadFromSheets(); });
   } else {
     requests.splice(i, 1);
     requests.forEach((x, idx) => x._idx = idx);
