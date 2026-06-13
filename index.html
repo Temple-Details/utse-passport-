@@ -322,9 +322,9 @@
   /* Stats bar */
   .stats-bar { display: flex; gap: 0.4rem; flex-wrap: wrap; margin: 0.6rem 0 0.75rem; }
   .stat-chip {
-    display: flex; align-items: center; gap: 0.3rem;
-    padding: 0.25rem 0.65rem; border-radius: 99px;
-    font-size: 0.75rem; font-weight: 500; cursor: pointer; font-family: inherit;
+    display: flex; align-items: center; gap: 0.4rem;
+    padding: 0.4rem 0.9rem; border-radius: 99px;
+    font-size: 0.85rem; font-weight: 500; cursor: pointer; font-family: inherit;
     border: 1.5px solid transparent; transition: all 0.15s;
     background: #f1f5f9; color: #6b7280;
   }
@@ -340,7 +340,7 @@
   .stat-chip.chip-sent-stdp { color: #6d28d9; background: #f5f3ff; }
   .stat-chip.chip-incomplete{ color: #b91c1c; background: #fff5f5; }
   .stat-chip.chip-cancelled { color: #6b7280; background: #f9fafb; }
-  .stat-chip .chip-count { font-size: 0.78rem; font-weight: 700; }
+  .stat-chip .chip-count { font-size: 0.88rem; font-weight: 700; }
 
   /* Zone tabs */
   .zone-tabs { display: flex; gap: 0.35rem; flex-wrap: wrap; }
@@ -488,24 +488,24 @@
         <label class="form-label">ประเทศที่สังกัด <span class="req">*</span></label>
         <select class="form-control" id="country-select" onchange="updateWats()">
           <option value="">— เลือกประเทศ —</option>
-          <optgroup label="เขต 1 — ยุโรปตะวันตก">
+          <optgroup label="เขต 1">
             <option value="france">ฝรั่งเศส</option>
             <option value="netherlands">เนเธอร์แลนด์</option>
             <option value="belgium">เบลเยียม</option>
             <option value="luxembourg">ลักแซมบวร์ก</option>
           </optgroup>
-          <optgroup label="เขต 2 — ยุโรปกลาง">
+          <optgroup label="เขต 2">
             <option value="germany">เยอรมนี</option>
             <option value="estonia">เอสโตเนีย</option>
           </optgroup>
-          <optgroup label="เขต 3 — สแกนดิเนเวีย">
+          <optgroup label="เขต 3">
             <option value="sweden">สวีเดน</option>
             <option value="norway">นอร์เวย์</option>
             <option value="denmark">เดนมาร์ก</option>
             <option value="finland">ฟินแลนด์</option>
             <option value="iceland">ไอซ์แลนด์</option>
           </optgroup>
-          <optgroup label="เขต 4 — ยุโรปใต้และตะวันออก">
+          <optgroup label="เขต 4">
             <option value="switzerland">สวิตเซอร์แลนด์</option>
             <option value="austria">ออสเตรีย</option>
             <option value="italy">อิตาลี</option>
@@ -1002,11 +1002,7 @@ const _adminState = (() => {
   return { get: () => _v, set: (v) => { if (typeof v === 'boolean') _v = v; } };
 })();
 Object.defineProperty(window, 'isAdmin', { get: () => _adminState.get(), set: () => {}, enumerable: false });
-let newRequestRefs = new Set();
-let readRefs = new Set();
 let lastSubmittedName = '';
-
-function updateAdminBadge() {}
 
 function getColVal(row, ...keywords) {
   for (const key of Object.keys(row)) {
@@ -1127,8 +1123,6 @@ function showPage(p, btn) {
   if(btn) btn.classList.add('active');
   window.scrollTo(0, 0);
   if(p==='status') renderStatusTable();
-  const bar = document.getElementById('sticky-submit-bar');
-  if(bar) bar.style.display = p === 'form' ? '' : 'none';
 }
 
 // COMBOBOX
@@ -1304,7 +1298,7 @@ function validate() {
 
 function submitForm() {
   if(!validate()) {
-    const firstErr = document.querySelector('.form-control.error, .field-error[style*="block"]');
+    const firstErr = document.querySelector('.form-control.error, .type-cards, .field-error[style*="block"]');
     if(firstErr) firstErr.scrollIntoView({behavior:'smooth', block:'center'});
     return;
   }
@@ -1315,7 +1309,7 @@ function submitForm() {
   const fullName = [fname, ftitle, lname].filter(Boolean).join(' ');
   const wat = document.getElementById('wat-select').value;
   const typeName = TYPE_NAMES[selectedType];
-  const dup = requests.find(r => r.name === fullName && r.wat === wat && r.type === typeName);
+  const dup = requests.find(r => r.name === fullName && trimWatName(r.wat) === wat && r.type === typeName);
   if(dup) {
     document.getElementById('dup-detail').innerHTML =
       `<strong>${fullName}</strong><br>วัด: ${wat}<br>ประเภท: ${typeName}<br><br>เคยส่งคำขอนี้ไปแล้วในครั้งนี้`;
@@ -1394,7 +1388,6 @@ function confirmSubmit() {
         isNew: true, _sheetName: res.sheetName || '', _sheetRow: res.rowNum || 0,
       });
       requests.forEach((x, idx) => x._idx = idx);
-      newRequestRefs.add(ref);
       document.getElementById('success-modal').classList.add('open');
       resetForm();
     })
@@ -1763,10 +1756,10 @@ function openEditWatModal(i) {
   const r = requests[i];
   const sel = document.getElementById('edit-country-input');
   const groups = [
-    {label:'เขต 1 — ยุโรปตะวันตก', keys:['france','netherlands','belgium','luxembourg']},
-    {label:'เขต 2 — ยุโรปกลาง',     keys:['germany','estonia']},
-    {label:'เขต 3 — สแกนดิเนเวีย',  keys:['sweden','norway','denmark','finland','iceland']},
-    {label:'เขต 4 — ยุโรปใต้และตะวันออก', keys:['switzerland','austria','italy','greece','czech','hungary','malta']},
+    {label:'เขต 1', keys:['france','netherlands','belgium','luxembourg']},
+    {label:'เขต 2', keys:['germany','estonia']},
+    {label:'เขต 3', keys:['sweden','norway','denmark','finland','iceland']},
+    {label:'เขต 4', keys:['switzerland','austria','italy','greece','czech','hungary','malta']},
   ];
   sel.innerHTML = groups.map(g =>
     `<optgroup label="${g.label}">${g.keys.map(k=>`<option value="${k}">${COUNTRY_NAMES[k]||k}</option>`).join('')}</optgroup>`
@@ -2087,6 +2080,7 @@ function showAdminLogin(){
   document.getElementById('admin-pass').value='';
   document.getElementById('login-error').style.display='none';
   document.getElementById('admin-login-modal').classList.add('open');
+  setTimeout(() => document.getElementById('admin-pass').focus(), 50);
   _resumeLockCountdown();
 }
 function closeAdminLogin(){
